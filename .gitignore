@@ -1,0 +1,8 @@
+Debug/
+targetConfigs/
+.settings/
+tm4c123gh6pm.cmd
+tm4c123gh6pm_startup_ccs.c
+.ccsproject
+.cproject
+.project
