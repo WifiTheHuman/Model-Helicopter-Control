@@ -16,6 +16,8 @@
 #include "OrbitOLED/OrbitOLEDInterface.h"
 #include "display.h"
 #include "quadrature.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 //*****************************************************************************
 //
@@ -83,7 +85,7 @@ displayYawDegrees(int yawSlotCount)
     char string[17];
     int yawDegrees;
 
-    yawDegrees = (((yawSlotCount % TOTAL_SLOTS) - MAX_SLOTS ) * MAX_DEGREES) / MAX_SLOTS; // Calculate yaw in degrees
+    yawDegrees = (((abs(yawSlotCount) % TOTAL_SLOTS) - MAX_SLOTS ) * MAX_DEGREES) / MAX_SLOTS; // Calculate yaw in degrees
 
     // Copy the slot count into string
     usnprintf(string, sizeof(string), "Yaw = %5d ", yawDegrees);
