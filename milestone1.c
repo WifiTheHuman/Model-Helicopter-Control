@@ -7,10 +7,16 @@
 //
 // Adapted from ADCDemo1.c by Phil Bones.
 //
+// Last Edited 7/05/19
+//
 //*****************************************************************************
 
+// Standard Libs
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
+
+// TivaWare Libs
 #include "inc/hw_memmap.h"
 #include "inc/hw_types.h"
 #include "driverlib/adc.h"
@@ -19,16 +25,20 @@
 #include "driverlib/sysctl.h"
 #include "driverlib/systick.h"
 #include "driverlib/interrupt.h"
+#include "driverlib/uart.h"
 #include "driverlib/debug.h"
 #include "utils/ustdlib.h"
+
+// Provided OrbitBoosterBoard Lib
+#include "OrbitOLED/OrbitOLEDInterface.h"
+
+// Libs created as part of the project
 #include "buttons4.h"
 #include "circBufT.h"
-#include "OrbitOLED/OrbitOLEDInterface.h"
 #include "display.h"
 #include "userInput.h"
 #include "quadrature.h"
-#include "uart.h"
-
+#include "uartHeli.h"
 
 //*****************************************************************************
 // Constants
@@ -36,6 +46,7 @@
 #define BUFFER_FILL_DELAY 6
 #define BUF_SIZE 40
 #define SAMPLE_RATE_HZ 100
+#define UART_SEND_PERIOD 200
 #define DISPLAY_PERIOD 25
 #define ZERO_SLOT_COUNT 224
 #define CHANNEL_A GPIO_PIN_0
@@ -46,13 +57,15 @@
 //*****************************************************************************
 // Global variables
 //*****************************************************************************
-static circBuf_t g_inBuffer;		// Buffer of size BUF_SIZE integers (sample values)
-static uint32_t g_ulSampCnt;	    // Counter for the interrupts
-static uint16_t displayFlag;        // Flag for refreshing display
-static uint16_t buttonFlag;         // Flag for button polling
-static int currentYawState;        // The current state of the yaw sensors
-static int previousYawState;       // The previous state of the yaw sensors
-int yawSlotCount = ZERO_SLOT_COUNT;
+static circBuf_t g_inBuffer;		 // Buffer of size BUF_SIZE integers (sample values)
+static uint32_t g_ulDispCnt;	     // Counter for display interrupts
+static uint32_t g_ulUARTCnt;         // Counter to trigger a UART send
+static uint8_t displayFlag;          // Flag for refreshing display
+static uint8_t UARTFlag;              // Flag for UART sending
+static uint8_t buttonFlag;           // Flag for button polling
+static int currentYawState;          // The current state of the yaw sensors
+static int previousYawState;         // The previous state of the yaw sensors
+int yawSlotCount = ZERO_SLOT_COUNT;  // Init the yaw slot to the zero value
 
 
 //*****************************************************************************
@@ -66,15 +79,22 @@ SysTickIntHandler(void)
     // Initiate a conversion
     ADCProcessorTrigger(ADC0_BASE, 3); 
 
-    g_ulSampCnt++;
+    g_ulDispCnt++;
+    g_ulUARTCnt++;
 
     // Set the flag for button polling
     buttonFlag = FLAG_SET;
 
     // Set the flag for display refreshing every 25 SysTick interrupts
-    if (g_ulSampCnt >= DISPLAY_PERIOD) {
-        g_ulSampCnt = 0;
+    if (g_ulDispCnt >= DISPLAY_PERIOD) {
+        g_ulDispCnt = 0;
         displayFlag = FLAG_SET;
+    }
+
+    // Set the flag to send UART data
+    if (g_ulUARTCnt >= UART_SEND_PERIOD) {
+        g_ulUARTCnt = 0;
+        UARTFlag = FLAG_SET;
     }
 }
 
@@ -145,6 +165,28 @@ initClock (void)
     // Enable interrupt and device
     SysTickIntEnable();
     SysTickEnable();
+}
+
+
+//*****************************************************************************
+//
+// Initialisation for UART Communications.
+//
+//*****************************************************************************
+void
+initUART(void)
+{
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
+
+    GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
+
+    UARTConfigSetExpClk(UART0_BASE, SysCtlClockGet(), BAUD_RATE,
+                        UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE | UART_CONFIG_PAR_NONE);
+
+    UARTFIFOEnable(UART0_BASE);
+
+    UARTEnable(UART0_BASE);
 }
 
 
@@ -229,6 +271,7 @@ main(void)
 	OLEDInitialise();
 	initCircBuf(&g_inBuffer, BUF_SIZE);
 	quadratureInitialise();
+	initUART();
 
     // Enable interrupts to the processor.
     IntMasterEnable();
@@ -237,19 +280,28 @@ main(void)
     SysCtlDelay(SysCtlClockGet() / BUFFER_FILL_DELAY);
 
     // Compute the mean ADC value, set the zero altitude value
-    meanADCVal = calcMeanOfContents(g_inBuffer, BUF_SIZE);
+    meanADCVal = calcMeanOfContents(&g_inBuffer, BUF_SIZE);
     landedADCVal = meanADCVal;
     updateDisplay(currentDisplayState, landedADCVal, meanADCVal, yawSlotCount);
 
 	while (1)
 	{
-	    meanADCVal = calcMeanOfContents(g_inBuffer, BUF_SIZE);
+	    IntMasterDisable();
+	    meanADCVal = calcMeanOfContents(&g_inBuffer, BUF_SIZE);
+	    IntMasterEnable();
 
 	    // Update the display at 4Hz. displayFlag is set every 25
 	    // SysTick interrupts (250ms).
 	    if (displayFlag) {
 	        displayFlag = FLAG_CLEAR;
 	        updateDisplay(currentDisplayState, landedADCVal, meanADCVal, yawSlotCount);
+	    }
+
+	    // Send UART Data at 0.5Hz
+	    // SysTick interrupts (2000ms)
+	    if (UARTFlag) {
+	        UARTFlag = FLAG_CLEAR;
+	        UARTSendData(landedADCVal, meanADCVal, yawSlotCount);
 	    }
 
 	    // Poll the buttons at 100Hz. Update their states if necessary.

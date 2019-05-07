@@ -78,7 +78,7 @@ freeCircBuf(circBuf_t * buffer)
 //
 //*****************************************************************************
 int32_t
-calcMeanOfContents(circBuf_t buffer, uint16_t bufferSize)
+calcMeanOfContents(circBuf_t *buffer, uint16_t bufferSize)
 {
     int32_t mean;
     uint16_t i;
@@ -87,7 +87,7 @@ calcMeanOfContents(circBuf_t buffer, uint16_t bufferSize)
     sum = 0;
     for (i = 0; i < bufferSize; i++)
     {
-        sum = sum + readCircBuf (&buffer);
+        sum = sum + readCircBuf (buffer);
     }
 
     mean = (2 * sum + bufferSize) / 2 / bufferSize;

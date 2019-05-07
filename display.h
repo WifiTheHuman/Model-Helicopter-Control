@@ -31,15 +31,6 @@ enum displayStates {PERCENT=0, MEAN, OFF};
 
 //*****************************************************************************
 //
-// Displays the mean ADC value (12-bit value) and sample count.
-//
-//*****************************************************************************
-void
-displayMeanADC(uint32_t meanADCVal);
-
-
-//*****************************************************************************
-//
 // Returns the helicopters altitude as a percentage.
 //
 //*****************************************************************************
@@ -49,21 +40,11 @@ calcPercentAltitude(uint16_t landedADCVal, uint16_t meanADCVal);
 
 //*****************************************************************************
 //
-// Displays the altitude of the helicopter as a percentage of the
-// maximum altitude.
+// Returns the yaw in degrees of the helicopter
 //
 //*****************************************************************************
-void
-displayPercentAltitude(uint16_t landedADCVal, uint16_t meanADCVal);
-
-
-//*****************************************************************************
-//
-// Displays the yaw angle of the helicopter in degrees.
-//
-//*****************************************************************************
-void
-displayYawDegrees(int yawSlotCount);
+int16_t
+calcYawDegrees(int yawSlotCount);
 
 
 //*****************************************************************************
@@ -78,7 +59,7 @@ clearDisplay(void);
 //*****************************************************************************
 //
 // Updates the display based on the FSM state.
-// Displays the yaw angle.
+// Displays all data after collecting from the calculator functions
 //
 //*****************************************************************************
 void

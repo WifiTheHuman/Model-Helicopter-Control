@@ -19,23 +19,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-//*****************************************************************************
-//
-// Displays the mean ADC value (12-bit value) and sample count.
-//
-//*****************************************************************************
-void
-displayMeanADC(uint32_t meanADCVal)
-{
-    char string[17];
-
-    // Copy the mean ADC value into string
-    usnprintf(string, sizeof(string), "Mean ADC = %4d", meanADCVal);
-
-    // Show the mean ADC on the display
-    OLEDStringDraw(string, OLED_COL_ZERO, OLED_ROW_ZERO);
-}
-
 
 //*****************************************************************************
 //
@@ -56,42 +39,18 @@ calcPercentAltitude(uint16_t landedADCVal, uint16_t meanADCVal)
 
 //*****************************************************************************
 //
-// Displays the altitude of the helicopter as a percentage of the
-// maximum altitude.
+// Returns the yaw angle in degrees
 //
 //*****************************************************************************
-void
-displayPercentAltitude(uint16_t landedADCVal, uint16_t meanADCVal)
+int16_t
+calcYawDegrees(int yawSlotCount)
 {
-    char string[17];
-    int16_t percentAltitude = calcPercentAltitude(landedADCVal, meanADCVal);
-
-    // Copy the percent altitude into string
-    usnprintf(string, sizeof(string), "Altitude = %3d%%", percentAltitude);
-
-    // Show altitude on the display
-    OLEDStringDraw(string, OLED_COL_ZERO, OLED_ROW_ZERO);
-}
-
-
-//*****************************************************************************
-//
-// Displays the yaw angle of the helicopter in degrees.
-//
-//*****************************************************************************
-void
-displayYawDegrees(int yawSlotCount)
-{
-    char string[17];
     int yawDegrees;
 
     yawDegrees = (((abs(yawSlotCount) % TOTAL_SLOTS) - MAX_SLOTS ) * MAX_DEGREES) / MAX_SLOTS; // Calculate yaw in degrees
 
     // Copy the slot count into string
-    usnprintf(string, sizeof(string), "Yaw = %5d ", yawDegrees);
-
-    // Show yaw on the display
-    OLEDStringDraw(string, OLED_COL_ZERO, OLED_ROW_THREE);
+    return yawDegrees;
 }
 
 
@@ -114,23 +73,26 @@ clearDisplay(void)
 //*****************************************************************************
 //
 // Updates the display based on the FSM state.
-// Displays the yaw angle.
+// Displays all data after collecting from the calculator functions
 //
 //*****************************************************************************
 void
 updateDisplay(uint8_t displayState,  uint16_t landedADCVal, uint16_t meanADCVal, int yawSlotCount)
 {
+    char string[17];
     switch (displayState) {
         case (PERCENT):
-            displayPercentAltitude(landedADCVal, meanADCVal);
+            usnprintf(string, sizeof(string), "Altitude = %3d%%", calcPercentAltitude(landedADCVal, meanADCVal));
+            OLEDStringDraw(string, OLED_COL_ZERO, OLED_ROW_ZERO);
             break;
         case (MEAN):
-            displayMeanADC(meanADCVal);
+            usnprintf(string, sizeof(string), "Mean ADC = %4d", meanADCVal);
+            OLEDStringDraw(string, OLED_COL_ZERO, OLED_ROW_ZERO);
             break;
         case (OFF):
             clearDisplay();
             break;
     }
-
-    displayYawDegrees(yawSlotCount);
+    usnprintf(string, sizeof(string), "Yaw = %5d ", calcYawDegrees(yawSlotCount));
+    OLEDStringDraw(string, OLED_COL_ZERO, OLED_ROW_THREE);
 }

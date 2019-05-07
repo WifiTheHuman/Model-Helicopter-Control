@@ -56,6 +56,6 @@ freeCircBuf(circBuf_t *buffer);
 //
 //*****************************************************************************
 int32_t
-calcMeanOfContents(circBuf_t buffer, uint16_t bufferSize);
+calcMeanOfContents(circBuf_t *buffer, uint16_t bufferSize);
 
 #endif /*CIRCBUFT_H_*/
