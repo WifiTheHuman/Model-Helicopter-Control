@@ -27,6 +27,7 @@
 #include "display.h"
 #include "userInput.h"
 #include "quadrature.h"
+#include "uart.h"
 
 
 //*****************************************************************************
