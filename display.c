@@ -54,6 +54,30 @@ calcYawDegrees(int yawSlotCount)
 }
 
 
+
+void
+displayPWM(uint32_t frequency, uint32_t duty_cycle)
+{
+    // Buffers for strings displayed
+    char freqString[17];
+    char dutyString[17];
+
+
+    // Draw blank lines (clear display)
+    OLEDStringDraw ("                ", 0, 0);
+    OLEDStringDraw ("                ", 1, 1);
+
+
+    // Copy PWM info into buffers
+    usnprintf (freqString, sizeof(freqString), "FREQ: - %d   Hz", frequency);
+    usnprintf (dutyString, sizeof(dutyString), "DUTY: - %d   %", duty_cycle);
+
+    // Show PWM info on display
+    OLEDStringDraw(freqString, OLED_COL_ZERO, OLED_ROW_ONE);
+    OLEDStringDraw(dutyString, OLED_COL_ZERO, OLED_ROW_TWO);
+}
+
+
 //*****************************************************************************
 //
 // Clears the display.
@@ -77,7 +101,8 @@ clearDisplay(void)
 //
 //*****************************************************************************
 void
-updateDisplay(uint8_t displayState,  uint16_t landedADCVal, uint16_t meanADCVal, int yawSlotCount)
+updateDisplay(uint8_t displayState,  uint16_t landedADCVal, uint16_t meanADCVal, int yawSlotCount,
+              uint16_t tailDuty, uint16_t mainDuty)
 {
     char string[17];
     switch (displayState) {

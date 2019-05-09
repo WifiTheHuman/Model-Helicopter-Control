@@ -27,6 +27,8 @@
 #include "driverlib/interrupt.h"
 #include "driverlib/uart.h"
 #include "driverlib/debug.h"
+#include "driverlib/pwm.h"
+#include "driverlib/pin_map.h"
 #include "utils/ustdlib.h"
 
 // Provided OrbitBoosterBoard Lib
@@ -39,6 +41,8 @@
 #include "userInput.h"
 #include "quadrature.h"
 #include "uartHeli.h"
+#include "pwm.h"
+#include "control.h"
 
 //*****************************************************************************
 // Constants
@@ -61,8 +65,10 @@ static circBuf_t g_inBuffer;		 // Buffer of size BUF_SIZE integers (sample value
 static uint32_t g_ulDispCnt;	     // Counter for display interrupts
 static uint32_t g_ulUARTCnt;         // Counter to trigger a UART send
 static uint8_t displayFlag;          // Flag for refreshing display
-static uint8_t UARTFlag;              // Flag for UART sending
+static uint8_t UARTFlag;             // Flag for UART sending
 static uint8_t buttonFlag;           // Flag for button polling
+static uint16_t tailDuty;            // Tail rotor duty cycle
+static uint16_t mainDuty;            // Main rotor duty cycle
 static int currentYawState;          // The current state of the yaw sensors
 static int previousYawState;         // The previous state of the yaw sensors
 int yawSlotCount = ZERO_SLOT_COUNT;  // Init the yaw slot to the zero value
@@ -154,6 +160,9 @@ initClock (void)
     // Set the clock rate to 20 MHz
     SysCtlClockSet(SYSCTL_SYSDIV_10 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN |
                    SYSCTL_XTAL_16MHZ);
+
+    // Set the PWM clock rate (using the prescaler)
+    SysCtlPWMClockSet(PWM_DIVIDER_CODE);
 
     // Set up the period for the SysTick timer.  The SysTick timer period is
     // set as a function of the system clock.
@@ -257,6 +266,44 @@ quadratureInitialise(void)
 }
 
 
+//*****************************************************************************
+//
+// Initialisation for PWM (PWM Module 0 PWM 7 for main rotor and
+// PWM module 1 PWM 5 for the tail rotor).
+//
+//*****************************************************************************
+void
+initialisePWM (void)
+{
+    SysCtlPeripheralEnable(PWM_MAIN_PERIPH_PWM);
+    SysCtlPeripheralEnable(PWM_MAIN_PERIPH_GPIO);
+
+    SysCtlPeripheralEnable(PWM_TAIL_PERIPH_PWM);
+       SysCtlPeripheralEnable(PWM_TAIL_PERIPH_GPIO);
+
+    GPIOPinConfigure(PWM_MAIN_GPIO_CONFIG);
+    GPIOPinConfigure(PWM_TAIL_GPIO_CONFIG);
+    GPIOPinTypePWM(PWM_MAIN_GPIO_BASE, PWM_MAIN_GPIO_PIN);
+    GPIOPinTypePWM(PWM_TAIL_GPIO_BASE, PWM_TAIL_GPIO_PIN);
+
+    PWMGenConfigure(PWM_MAIN_BASE, PWM_MAIN_GEN,
+                    PWM_GEN_MODE_UP_DOWN | PWM_GEN_MODE_NO_SYNC);
+    PWMGenConfigure(PWM_TAIL_BASE, PWM_TAIL_GEN,
+                       PWM_GEN_MODE_UP_DOWN | PWM_GEN_MODE_NO_SYNC);
+
+    // Set the initial PWM parameters
+    setMainPWM (PWM_MAIN_START_RATE_HZ, PWM_MAIN_START_DUTY);
+    setTailPWM (PWM_TAIL_START_RATE_HZ, PWM_TAIL_START_DUTY);
+
+    PWMGenEnable(PWM_MAIN_BASE, PWM_MAIN_GEN);
+    PWMGenEnable(PWM_TAIL_BASE, PWM_TAIL_GEN);
+
+    // Disable the output.  Repeat this call with 'true' to turn O/P on.
+    PWMOutputState(PWM_MAIN_BASE, PWM_MAIN_OUTBIT, false);
+    PWMOutputState(PWM_TAIL_BASE, PWM_TAIL_OUTBIT, false);
+}
+
+
 int
 main(void)
 {
@@ -271,6 +318,7 @@ main(void)
 	OLEDInitialise();
 	initCircBuf(&g_inBuffer, BUF_SIZE);
 	quadratureInitialise();
+	initialisePWM();
 	initUART();
 
     // Enable interrupts to the processor.
@@ -282,7 +330,8 @@ main(void)
     // Compute the mean ADC value, set the zero altitude value
     meanADCVal = calcMeanOfContents(&g_inBuffer, BUF_SIZE);
     landedADCVal = meanADCVal;
-    updateDisplay(currentDisplayState, landedADCVal, meanADCVal, yawSlotCount);
+    updateDisplay(currentDisplayState, landedADCVal, meanADCVal, yawSlotCount,
+                  tailDuty, mainDuty);
 
 	while (1)
 	{
@@ -294,7 +343,8 @@ main(void)
 	    // SysTick interrupts (250ms).
 	    if (displayFlag) {
 	        displayFlag = FLAG_CLEAR;
-	        updateDisplay(currentDisplayState, landedADCVal, meanADCVal, yawSlotCount);
+	        updateDisplay(currentDisplayState, landedADCVal, meanADCVal, yawSlotCount,
+	                      tailDuty, mainDuty);
 	    }
 
 	    // Send UART Data at 0.5Hz
@@ -309,6 +359,8 @@ main(void)
 	        buttonFlag = FLAG_CLEAR;
 	        checkButtons(&landedADCVal, meanADCVal, &currentDisplayState);
 	    }
+
+	    setMainPWM(200, calcPercentAltitude(landedADCVal, meanADCVal));
 	}
 }
 

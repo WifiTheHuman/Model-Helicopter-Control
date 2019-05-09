@@ -47,6 +47,10 @@ int16_t
 calcYawDegrees(int yawSlotCount);
 
 
+void
+displayPWM(uint32_t frequency, uint32_t duty_cycle);
+
+
 //*****************************************************************************
 //
 // Clears the display.
@@ -63,6 +67,7 @@ clearDisplay(void);
 //
 //*****************************************************************************
 void
-updateDisplay(uint8_t displayState,  uint16_t landedADCVal, uint16_t meanADCVal, int yawSlotCount);
+updateDisplay(uint8_t displayState,  uint16_t landedADCVal, uint16_t meanADCVal, int yawSlotCount,
+              uint16_t tailDuty, uint16_t mainDuty);
 
 #endif /*DISPLAY_H_*/
