@@ -279,7 +279,7 @@ initialisePWM (void)
     SysCtlPeripheralEnable(PWM_MAIN_PERIPH_GPIO);
 
     SysCtlPeripheralEnable(PWM_TAIL_PERIPH_PWM);
-       SysCtlPeripheralEnable(PWM_TAIL_PERIPH_GPIO);
+    SysCtlPeripheralEnable(PWM_TAIL_PERIPH_GPIO);
 
     GPIOPinConfigure(PWM_MAIN_GPIO_CONFIG);
     GPIOPinConfigure(PWM_TAIL_GPIO_CONFIG);
@@ -321,6 +321,10 @@ main(void)
 	initialisePWM();
 	initUART();
 
+    // Initialisation is complete, so turn on the output.
+    PWMOutputState(PWM_MAIN_BASE, PWM_MAIN_OUTBIT, true);
+    PWMOutputState(PWM_TAIL_BASE, PWM_TAIL_OUTBIT, true);
+
     // Enable interrupts to the processor.
     IntMasterEnable();
 
@@ -360,7 +364,7 @@ main(void)
 	        checkButtons(&landedADCVal, meanADCVal, &currentDisplayState);
 	    }
 
-	    setMainPWM(200, calcPercentAltitude(landedADCVal, meanADCVal));
+//	    setMainPWM(200, calcPercentAltitude(landedADCVal, meanADCVal));
 	}
 }
 

@@ -26,7 +26,8 @@ enum displayStates {PERCENT=0, MEAN, OFF};
 #define OLED_ROW_TWO 2
 #define OLED_ROW_THREE 3
 #define PERCENT_CONVERSION 100
-#define MAX_DEGREES 180
+#define MAX_DEGREES 360
+#define HALF_DEGREES 180
 
 
 //*****************************************************************************

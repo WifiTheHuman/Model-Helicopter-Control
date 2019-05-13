@@ -8,9 +8,23 @@ static int referencePercentHeight;
 static int currentPercentHeight;
 static int landedHeight;
 
-static int referenceYawDegrees;
-static int currentYawDegrees;
+static uint8_t currentMode;
 
+static int currentYaw;
+static int currretHeight;
+
+static int referenceYaw;
+static int currentYaw;
+
+
+void setCurrentHeight(int height) {
+    currentHeight = height;
+}
+
+
+void setCurrentYaw(int yaw) {
+    currentYaw = yaw;
+}
 
 
 void setReferenceUp(void) {
@@ -20,6 +34,7 @@ void setReferenceUp(void) {
     }
 }
 
+
 void setReferenceDown(void) {
     referencePercentHeight -= HEIGHTSTEP;
     if (referencePercentHeight < MINHEIGHT) {
@@ -28,20 +43,24 @@ void setReferenceDown(void) {
 }
 
 void setReferenceCW(void) {
-    referenceYawDegrees -= YAWSTEP;
-    if (referenceYawDegrees < MINYAW) {
-        referenceYawDegrees = MAXYAW - (referenceYawDegrees + MAXYAW);
-    }
+    referenceYaw += YAWSTEP;
 }
 
+
 void setReferenceCCW(void) {
-    referenceYawDegrees += YAWSTEP;
-    if (referenceYawDegrees > MAXYAW) {
-        referenceYawDegrees = MINYAW + (referenceYawDegrees + MINYAW);
-    }
+    referenceYaw -= YAWSTEP;
 }
+
 
 void setLandedHeight(uint16_t landed) {
     landedHeight = landed;
 }
 
+
+void setMode(uint8_t mode) {
+    currentMode = mode;
+}
+
+void updateControl(void) {
+
+}
