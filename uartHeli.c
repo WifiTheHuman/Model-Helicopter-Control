@@ -16,6 +16,7 @@
 #include "uartHeli.h"
 #include "inc/hw_memmap.h"
 #include "display.h"
+#include "control.h"
 #include "utils/ustdlib.h"
 
 
@@ -43,10 +44,12 @@ UARTSendString(char *message)
 //*****************************************************************************
 void UARTSendData(uint16_t landedADCVal, uint16_t meanADCVal, int yawSlotCount)
 {
-    char UARTOut[30];
+    char UARTOut[40];
 
     // Gets data from the calc functions in display.c then creates a string from the data.
-    usnprintf(UARTOut, sizeof(UARTOut), "Altitude=%2d Yaw=%2d\  |  ", calcPercentAltitude(landedADCVal, meanADCVal), calcYawDegrees(yawSlotCount));
+    usnprintf(UARTOut, sizeof(UARTOut), "Altitude=%2d Yaw=%2d  |  YawD=%2d | HeightD=%2d",
+              calcPercentAltitude(landedADCVal, meanADCVal), calcYawDegrees(yawSlotCount),
+              getDistanceYaw(), getDistanceHeight());
 
     UARTSendString(UARTOut);
 
