@@ -65,6 +65,7 @@ static circBuf_t g_inBuffer;		 // Buffer of size BUF_SIZE integers (sample value
 static uint32_t g_ulDispCnt;	     // Counter for display interrupts
 static uint32_t g_ulUARTCnt;         // Counter to trigger a UART send
 static uint8_t displayFlag;          // Flag for refreshing display
+static uint8_t controlUpdateFlag;    // Flag for refreshing control system
 static uint8_t UARTFlag;             // Flag for UART sending
 static uint8_t buttonFlag;           // Flag for button polling
 static uint16_t tailDuty;            // Tail rotor duty cycle
@@ -90,6 +91,8 @@ SysTickIntHandler(void)
 
     // Set the flag for button polling
     buttonFlag = FLAG_SET;
+
+    controlUpdateFlag = FLAG_SET;
 
     // Set the flag for display refreshing every 25 SysTick interrupts
     if (g_ulDispCnt >= DISPLAY_PERIOD) {
@@ -146,6 +149,8 @@ quadratureIntHandler(void)
 
     // Determine the direction of rotation. Increment or decrement yawSlotCount appropriately.
     quadratureDecode(&yawSlotCount, currentYawState, previousYawState);
+
+    setCurrentYaw(yawSlotCount);
 }
 
 
@@ -303,6 +308,10 @@ initialisePWM (void)
     PWMOutputState(PWM_TAIL_BASE, PWM_TAIL_OUTBIT, false);
 }
 
+void resetYawSlots(void) {
+    yawSlotCount = 0;
+}
+
 
 int
 main(void)
@@ -343,6 +352,10 @@ main(void)
 	    meanADCVal = calcMeanOfContents(&g_inBuffer, BUF_SIZE);
 	    IntMasterEnable();
 
+	    setMode(2); //Remove Later
+
+	    setCurrentHeight(calcPercentAltitude(landedADCVal, meanADCVal));
+
 	    // Update the display at 4Hz. displayFlag is set every 25
 	    // SysTick interrupts (250ms).
 	    if (displayFlag) {
@@ -362,6 +375,10 @@ main(void)
 	    if (buttonFlag) {
 	        buttonFlag = FLAG_CLEAR;
 	        checkButtons(&landedADCVal, meanADCVal, &currentDisplayState);
+	    }
+
+	    if (controlUpdateFlag) {
+	        updateControl();
 	    }
 
 //	    setMainPWM(200, calcPercentAltitude(landedADCVal, meanADCVal));

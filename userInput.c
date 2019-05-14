@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include "buttons4.h"
 #include "userInput.h"
+#include "control.h"
 
 
 //*****************************************************************************
@@ -43,22 +44,39 @@ checkButtons(uint16_t* landedADCVal, uint16_t meanADCVal, uint8_t* currentState)
     // If LEFT button has been pushed, then set the landed altitude to the mean sample value
     switch (butState) {
     case PUSHED:
-        setLandedAltitude(landedADCVal, meanADCVal);
+        setReferenceCCW();
         break;
     case RELEASED:
         break;
     }
 
+    butState = checkButton(RIGHT);
+        // If LEFT button has been pushed, then set the landed altitude to the mean sample value
+        switch (butState) {
+        case PUSHED:
+            setReferenceCW();
+            break;
+        case RELEASED:
+            break;
+        }
+
     butState = checkButton(UP);
     // If UP button has been pushed, then cycle the display to the next state
     switch (butState) {
     case PUSHED:
-        *currentState += 1;
-        if (*currentState > DISPLAY_OFF) {
-            *currentState = DISPLAY_PERCENT;
-        }
+        setReferenceUp();
         break;
     case RELEASED:
         break;
     }
+
+    butState = checkButton(DOWN);
+        // If UP button has been pushed, then cycle the display to the next state
+        switch (butState) {
+        case PUSHED:
+            setReferenceDown();
+            break;
+        case RELEASED:
+            break;
+        }
 }
