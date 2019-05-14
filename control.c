@@ -92,8 +92,12 @@ void updateYaw(void) {
 
     output = KpTail * distanceYaw;
 
-    if (output > 100) {
-        output = 100;
+    if (output > 98) {
+        output = 98;
+    }
+
+    if (output < 2) {
+        output = 2;
     }
 
     setTailPWM(PWM_TAIL_START_RATE_HZ, output);
@@ -107,9 +111,14 @@ void updateHeight(void) {
 
     output = KpMain * distanceHeight;
 
-    if (output > 100) {
-        output = 100;
+    if (output > 98) {
+        output = 98;
     }
+
+    if (output < 2) {
+        output = 2;
+    }
+
     setMainPWM(PWM_MAIN_START_RATE_HZ, output);
 }
 
