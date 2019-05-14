@@ -315,6 +315,7 @@ void resetYawSlots(void) {
 
 int
 main(void)
+
 {
     uint16_t landedADCVal;
     uint16_t meanADCVal;
