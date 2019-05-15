@@ -1,6 +1,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include "inc/hw_memmap.h"
+#include "inc/hw_types.h"
+#include "driverlib/gpio.h"
 #include "control.h"
 #include "pwm.h"
 
@@ -12,10 +15,37 @@ static uint8_t currentMode;
 static int distanceHeight;
 static int distanceYaw;
 
+static double heightErrorIntegrated;
+static double yawErrorIntegrated;
+
 static uint8_t referenceFound;
 
 static int referenceYaw;
 static int currentYaw;
+static int lastRefCrossing;
+
+void findIndependentYawReference(void) {
+    // Begin flying heli, rotate CCW slowly
+    setMainPWM(PWM_MAIN_START_RATE_HZ, PWM_MAIN_START_DUTY);
+    setTailPWM(PWM_TAIL_START_RATE_HZ, PWM_TAIL_START_DUTY);
+
+    // Read PC4 while it is high (while the independent reference isn't found)
+    while (1) {
+        if (!GPIOPinRead(GPIO_PORTC_BASE, GPIO_PIN_4)) {
+            resetYawSlots();
+            setReferenceYaw(ZERO_YAW);
+            lastRefCrossing = ZERO_YAW;
+            break;
+        }
+    }
+
+    setMode(FLYING);
+}
+
+
+void setLastRefCrossing(int yawSlotCount) {
+    lastRefCrossing = yawSlotCount;
+}
 
 
 void setCurrentHeight(int height) {
@@ -86,9 +116,10 @@ int getDistanceHeight(void) {
 
 
 void updateYaw(void) {
-    uint8_t output;
+    uint16_t output;
 
-    distanceYaw = referenceYaw - currentYaw;
+    distanceYaw = referenceYaw - currentYaw; // yaw error signal
+    yawErrorIntegrated += distanceYaw * DELTA_T; // integral of yaw error signal
 
     output = KpTail * distanceYaw;
 
@@ -105,11 +136,12 @@ void updateYaw(void) {
 
 
 void updateHeight(void) {
-    uint8_t output;
+    uint16_t output;
 
-    distanceHeight = referencePercentHeight - currentPercentHeight;
+    distanceHeight = referencePercentHeight - currentPercentHeight; // height error signal
+    heightErrorIntegrated += distanceHeight * DELTA_T; // height integral of error signal
 
-    output = KpMain * distanceHeight;
+    output = (KpMain * distanceHeight) + (KiMain * heightErrorIntegrated);
 
     if (output > 98) {
         output = 98;
@@ -123,30 +155,23 @@ void updateHeight(void) {
 }
 
 void updateControl(void) {
- switch (currentMode) {
-     case (LANDING):
-             setReferenceYaw(0);
-             setReferenceHeight(0);
-             updateYaw();
-             updateHeight();
-             break;
-     case (TAKINGOFF):
-             setReferenceHeight(10);
-             if (referenceFound) {
-                 setReferenceYaw(0);
-                 updateYaw();
-             } else {
-                 setTailPWM(PWM_TAIL_START_RATE_HZ, PWM_FIND_REF);
-             }
-             updateHeight();
-             break;
-     case (FLYING):
-             updateYaw();
-             updateHeight();
-             break;
-     case (LANDED):
-             setMainPWM(PWM_MAIN_START_RATE_HZ, PWM_OFF);
-             setTailPWM(PWM_TAIL_START_RATE_HZ, PWM_OFF);
-             break;
- }
+    switch (currentMode) {
+        case (LANDING):
+                setReferenceYaw(0);
+                setReferenceHeight(0);
+                updateYaw();
+                updateHeight();
+                break;
+        case (TAKINGOFF):
+                findIndependentYawReference();
+                break;
+        case (FLYING):
+                updateYaw();
+                updateHeight();
+                break;
+        case (LANDED):
+                setMainPWM(PWM_MAIN_START_RATE_HZ, PWM_OFF);
+                setTailPWM(PWM_TAIL_START_RATE_HZ, PWM_OFF);
+                break;
+    }
 }

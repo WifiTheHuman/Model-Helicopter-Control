@@ -30,7 +30,7 @@ UARTSendString(char *message)
 {
     while (*message)
     {
-        UARTCharPut(UART0_BASE, *message);
+        UARTCharPut(UART_USB_BASE, *message);
         message++;
     }
 }
@@ -44,10 +44,10 @@ UARTSendString(char *message)
 //*****************************************************************************
 void UARTSendData(uint16_t landedADCVal, uint16_t meanADCVal, int yawSlotCount)
 {
-    char UARTOut[40];
+    char UARTOut[45];
 
     // Gets data from the calc functions in display.c then creates a string from the data.
-    usnprintf(UARTOut, sizeof(UARTOut), "Altitude=%2d Yaw=%2d  |  YawD=%2d | HeightD=%2d",
+    usnprintf(UARTOut, sizeof(UARTOut),"Altitude=%2d Yaw=%2d | YawD=%2d | HeightD=%2d\n",
               calcPercentAltitude(landedADCVal, meanADCVal), calcYawDegrees(yawSlotCount),
               getDistanceYaw(), getDistanceHeight());
 

@@ -6,17 +6,23 @@
 #define MINYAW -180
 #define MAXYAW 180
 #define ERROR 3
+#define ZERO_YAW 0
 
-#define KpMain 0.8
-#define KiMain 0.8
-#define KdMain 0.8
+#define DELTA_T 0.01
+
+#define KpMain 1.0
+#define KiMain 0.001
+#define KdMain 0.05
 
 #define KpTail 0.2
-#define KiTail 0.8
-#define KdTail 0.8
+#define KiTail 0.001
+#define KdTail 0.05
 
 enum controlStates {LANDING=0, TAKINGOFF, FLYING, LANDED};
 
+void findIndependentYawReference(void);
+
+void setLastRefCrossing(int yawSlotCount);
 
 void setCurrentHeight(int height);
 
@@ -35,6 +41,10 @@ void setReferenceHeight(int height);
 void setReferenceCCW(void);
 
 void setMode(uint8_t mode);
+
+int getDistanceYaw(void);
+
+int getDistanceHeight(void);
 
 void updateYaw(void);
 

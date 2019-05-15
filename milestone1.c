@@ -92,6 +92,7 @@ SysTickIntHandler(void)
     // Set the flag for button polling
     buttonFlag = FLAG_SET;
 
+    // Set the flag for the PID controller
     controlUpdateFlag = FLAG_SET;
 
     // Set the flag for display refreshing every 25 SysTick interrupts
@@ -156,11 +157,42 @@ quadratureIntHandler(void)
 
 //*****************************************************************************
 //
+// The interrupt handler for the independent yaw reference signal.
+// The interrupt is triggered by falling edges on PC4.
+//
+//*****************************************************************************
+void yawRefSignalIntHandler(void) {
+    GPIOIntClear(GPIO_PORTC_BASE, GPIO_INT_PIN_4); // Clear the interrupt
+
+    setLastRefCrossing(yawSlotCount);
+}
+
+
+//*****************************************************************************
+//
+// The interrupt handler for the slider switch.
+// The interrupt is triggered by edges on PA7.
+//
+//*****************************************************************************
+void switchIntHandler(void) {
+     GPIOIntClear(GPIO_PORTA_BASE, GPIO_INT_PIN_7); // Clear the interrupt
+
+     // Check if the edge was rising or falling, set the helicopter mode.
+     if (GPIOPinRead(GPIO_PORTA_BASE, GPIO_PIN_7)) {
+         setMode(TAKINGOFF);
+     } else {
+         setMode(LANDING);
+     }
+}
+
+
+//*****************************************************************************
+//
 // Initialisation for the clock (incl. SysTick).
 //
 //*****************************************************************************
 void
-initClock (void)
+initClock(void)
 {
     // Set the clock rate to 20 MHz
     SysCtlClockSet(SYSCTL_SYSDIV_10 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN |
@@ -184,23 +216,30 @@ initClock (void)
 
 //*****************************************************************************
 //
-// Initialisation for UART Communications.
+// Initialisation for UART - 8 bits, 1 stop bit, no parity.
+// Taken from uartDemo.c by Phil Bones.
 //
 //*****************************************************************************
 void
-initUART(void)
+initialiseUSB_UART(void)
 {
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
+    //
+    // Enable GPIO port A which is used for UART0 pins.
+    //
+    SysCtlPeripheralEnable(UART_USB_PERIPH_UART);
+    SysCtlPeripheralEnable(UART_USB_PERIPH_GPIO);
+    //
+    // Select the alternate (UART) function for these pins.
+    //
+    GPIOPinTypeUART(UART_USB_GPIO_BASE, UART_USB_GPIO_PINS);
+    GPIOPinConfigure (GPIO_PA0_U0RX);
+    GPIOPinConfigure (GPIO_PA1_U0TX);
 
-    GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
-
-    UARTConfigSetExpClk(UART0_BASE, SysCtlClockGet(), BAUD_RATE,
-                        UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE | UART_CONFIG_PAR_NONE);
-
-    UARTFIFOEnable(UART0_BASE);
-
-    UARTEnable(UART0_BASE);
+    UARTConfigSetExpClk(UART_USB_BASE, SysCtlClockGet(), BAUD_RATE,
+                        UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE |
+                        UART_CONFIG_PAR_NONE);
+    UARTFIFOEnable(UART_USB_BASE);
+    UARTEnable(UART_USB_BASE);
 }
 
 
@@ -210,7 +249,7 @@ initUART(void)
 //
 //*****************************************************************************
 void 
-initADC (void)
+initADC(void)
 {
 
     // The ADC0 peripheral must be enabled for configuration and use.
@@ -278,7 +317,7 @@ quadratureInitialise(void)
 //
 //*****************************************************************************
 void
-initialisePWM (void)
+initialisePWM(void)
 {
     SysCtlPeripheralEnable(PWM_MAIN_PERIPH_PWM);
     SysCtlPeripheralEnable(PWM_MAIN_PERIPH_GPIO);
@@ -297,8 +336,8 @@ initialisePWM (void)
                        PWM_GEN_MODE_UP_DOWN | PWM_GEN_MODE_NO_SYNC);
 
     // Set the initial PWM parameters
-    setMainPWM (PWM_MAIN_START_RATE_HZ, PWM_MAIN_START_DUTY);
-    setTailPWM (PWM_TAIL_START_RATE_HZ, PWM_TAIL_START_DUTY);
+    setMainPWM(PWM_MAIN_START_RATE_HZ, PWM_MAIN_START_DUTY);
+    setTailPWM(PWM_TAIL_START_RATE_HZ, PWM_TAIL_START_DUTY);
 
     PWMGenEnable(PWM_MAIN_BASE, PWM_MAIN_GEN);
     PWMGenEnable(PWM_TAIL_BASE, PWM_TAIL_GEN);
@@ -308,6 +347,60 @@ initialisePWM (void)
     PWMOutputState(PWM_TAIL_BASE, PWM_TAIL_OUTBIT, false);
 }
 
+
+//*****************************************************************************
+//
+// Initialisation for the independent yaw reference.
+// A low value on PC4 indicates the reference is found.
+//
+//*****************************************************************************
+void initYawReferenceSignal(void) {
+    // Enable Port C
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOC);
+
+    // Set pin 4 as an input
+    GPIOPinTypeGPIOInput(GPIO_PORTC_BASE, GPIO_PIN_4);
+
+    // Enable interrupts on PC4
+    GPIOIntEnable(GPIO_PORTC_BASE, GPIO_INT_PIN_4);
+
+    // Set interrupts on PC4 as a high level interrupt
+    GPIOIntTypeSet(GPIO_PORTC_BASE, GPIO_PIN_4, GPIO_FALLING_EDGE);
+
+    // Register the interrupt handler
+    GPIOIntRegister(GPIO_PORTC_BASE, yawRefSignalIntHandler);
+}
+
+
+//*****************************************************************************
+//
+// Initialisation for SW1.
+// SW1 switches the mode of the helicopter.
+//
+//*****************************************************************************
+void initSliderSwitch(void) {
+    // Enable Port A
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
+
+    // Set pin 7 as an input
+    GPIOPinTypeGPIOInput(GPIO_PORTA_BASE, GPIO_PIN_7);
+
+    // Enable interrupts on PA7
+    GPIOIntEnable(GPIO_PORTA_BASE, GPIO_PIN_7);
+
+    // Set interrupts on PA7 as pin change interrupts
+    GPIOIntTypeSet(GPIO_PORTA_BASE, GPIO_PIN_7, GPIO_BOTH_EDGES);
+
+    // Register the interrupt handler
+    GPIOIntRegister(GPIO_PORTA_BASE, switchIntHandler);
+}
+
+
+//*****************************************************************************
+//
+// Sets the yaw slot count to zero.
+//
+//*****************************************************************************
 void resetYawSlots(void) {
     yawSlotCount = 0;
 }
@@ -329,7 +422,9 @@ main(void)
 	initCircBuf(&g_inBuffer, BUF_SIZE);
 	quadratureInitialise();
 	initialisePWM();
-	initUART();
+	initialiseUSB_UART();
+	initYawReferenceSignal();
+	initSliderSwitch();
 
     // Initialisation is complete, so turn on the output.
     PWMOutputState(PWM_MAIN_BASE, PWM_MAIN_OUTBIT, true);
@@ -346,6 +441,7 @@ main(void)
     landedADCVal = meanADCVal;
     updateDisplay(currentDisplayState, landedADCVal, meanADCVal, yawSlotCount,
                   tailDuty, mainDuty);
+    setMode(TAKINGOFF);
 
 	while (1)
 	{
@@ -353,9 +449,8 @@ main(void)
 	    meanADCVal = calcMeanOfContents(&g_inBuffer, BUF_SIZE);
 	    IntMasterEnable();
 
-	    setMode(2); //Remove Later
-
 	    setCurrentHeight(calcPercentAltitude(landedADCVal, meanADCVal));
+	    setCurrentYaw(yawSlotCount);
 
 	    // Update the display at 4Hz. displayFlag is set every 25
 	    // SysTick interrupts (250ms).
@@ -375,14 +470,14 @@ main(void)
 	    // Poll the buttons at 100Hz. Update their states if necessary.
 	    if (buttonFlag) {
 	        buttonFlag = FLAG_CLEAR;
-	        checkButtons(&landedADCVal, meanADCVal, &currentDisplayState);
+	        checkButtons();
 	    }
 
+	    // Update the PID controller
 	    if (controlUpdateFlag) {
+	        controlUpdateFlag = FLAG_CLEAR;
 	        updateControl();
 	    }
-
-//	    setMainPWM(200, calcPercentAltitude(landedADCVal, meanADCVal));
 	}
 }
 

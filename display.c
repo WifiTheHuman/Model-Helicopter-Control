@@ -66,11 +66,7 @@ displayPWM(uint32_t frequency, uint32_t duty_cycle)
     char freqString[17];
     char dutyString[17];
 
-
-    // Draw blank lines (clear display)
-    OLEDStringDraw ("                ", 0, 0);
-    OLEDStringDraw ("                ", 1, 1);
-
+    clearDisplay();
 
     // Copy PWM info into buffers
     usnprintf (freqString, sizeof(freqString), "FREQ: - %d   Hz", frequency);
