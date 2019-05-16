@@ -25,24 +25,22 @@ static int16_t outputTail;
 
 static int referenceYaw;
 static int currentYaw;
-static int lastRefCrossing;
+static volatile int lastRefCrossing;
 
 void findIndependentYawReference(void) {
     // Begin flying heli, rotate CCW slowly
-    setMainPWM(PWM_MAIN_START_RATE_HZ, PWM_MAIN_START_DUTY);
+    setReferenceHeight(TAKE_OFF_HEIGHT);
     setTailPWM(PWM_TAIL_START_RATE_HZ, PWM_TAIL_START_DUTY);
 
     // Read PC4 while it is high (while the independent reference isn't found)
-    while (1) {
-        if (!GPIOPinRead(GPIO_PORTC_BASE, GPIO_PIN_4)) {
-            resetYawSlots();
-            setReferenceYaw(ZERO_YAW);
-            lastRefCrossing = ZERO_YAW;
-            break;
-        }
+    if (lastRefCrossing != 0) {
+        resetYawSlots();
+        setReferenceYaw(ZERO_YAW);
+        lastRefCrossing = ZERO_YAW;
+        setMode(FLYING);
     }
 
-    setMode(FLYING);
+
 }
 
 

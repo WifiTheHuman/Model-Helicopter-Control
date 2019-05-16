@@ -7,14 +7,15 @@
 #define MAXYAW 180
 #define ERROR 3
 #define ZERO_YAW 0
+#define TAKE_OFF_HEIGHT 10
 
 #define DELTA_T 0.01
 
-#define KpMain 1.0
+#define KpMain 2.5
 #define KiMain 0.001
 #define KdMain 0.05
 
-#define KpTail 0.2
+#define KpTail 0.8
 #define KiTail 0.001
 #define KdTail 0.05
 
