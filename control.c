@@ -6,6 +6,7 @@
 #include "driverlib/gpio.h"
 #include "control.h"
 #include "pwm.h"
+#include "quadrature.h"
 
 static int referencePercentHeight;
 static int currentPercentHeight;
@@ -30,7 +31,7 @@ static volatile int lastRefCrossing;
 void findIndependentYawReference(void) {
     // Begin flying heli, rotate CCW slowly
     setReferenceHeight(TAKE_OFF_HEIGHT);
-    setTailPWM(PWM_TAIL_START_RATE_HZ, PWM_TAIL_START_DUTY);
+    setReferenceYaw(TOTAL_SLOTS);
 
     // Read PC4 while it is high (while the independent reference isn't found)
     if (lastRefCrossing != 0) {
