@@ -168,7 +168,7 @@ void updateControl(void) {
         case (FLYING):
                 updateYaw();
                 updateHeight();
-                break;
+               break;
         case (LANDED):
                 setMainPWM(PWM_MAIN_START_RATE_HZ, PWM_OFF);
                 setTailPWM(PWM_TAIL_START_RATE_HZ, PWM_OFF);
