@@ -336,8 +336,8 @@ initialisePWM(void)
                        PWM_GEN_MODE_UP_DOWN | PWM_GEN_MODE_NO_SYNC);
 
     // Set the initial PWM parameters
-    setMainPWM(PWM_MAIN_START_RATE_HZ, PWM_MAIN_START_DUTY);
-    setTailPWM(PWM_TAIL_START_RATE_HZ, PWM_TAIL_START_DUTY);
+    setMainPWM(PWM_MAIN_START_RATE_HZ, PWM_OFF);
+    setTailPWM(PWM_TAIL_START_RATE_HZ, PWM_OFF);
 
     PWMGenEnable(PWM_MAIN_BASE, PWM_MAIN_GEN);
     PWMGenEnable(PWM_TAIL_BASE, PWM_TAIL_GEN);
@@ -382,8 +382,11 @@ void initSliderSwitch(void) {
     // Enable Port A
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
 
-    // Set pin 7 as an input
-    GPIOPinTypeGPIOInput(GPIO_PORTA_BASE, GPIO_PIN_7);
+    GPIOPadConfigSet(GPIO_PORTA_BASE, GPIO_PIN_7, GPIO_STRENGTH_4MA, GPIO_PIN_TYPE_STD_WPD);
+    GPIODirModeSet(GPIO_PORTF_BASE, GPIO_PIN_7, GPIO_DIR_MODE_IN);
+
+//    // Set pin 7 as an input
+//    GPIOPinTypeGPIOInput(GPIO_PORTA_BASE, GPIO_PIN_7);
 
     // Enable interrupts on PA7
     GPIOIntEnable(GPIO_PORTA_BASE, GPIO_PIN_7);
@@ -441,7 +444,7 @@ main(void)
     landedADCVal = meanADCVal;
     updateDisplay(currentDisplayState, landedADCVal, meanADCVal, yawSlotCount,
                   tailDuty, mainDuty);
-    setMode(TAKINGOFF);
+    setMode(LANDED);
 
 	while (1)
 	{
@@ -462,10 +465,10 @@ main(void)
 
 	    // Send UART Data at 0.5Hz
 	    // SysTick interrupts (2000ms)
-	    if (UARTFlag) {
-	        UARTFlag = FLAG_CLEAR;
-	        UARTSendData(landedADCVal, meanADCVal, yawSlotCount);
-	    }
+//	    if (UARTFlag) {
+//	        UARTFlag = FLAG_CLEAR;
+//	        UARTSendData(landedADCVal, meanADCVal, yawSlotCount);
+//	    }
 
 	    // Poll the buttons at 100Hz. Update their states if necessary.
 	    if (buttonFlag) {

@@ -31,10 +31,12 @@ void findIndependentYawReference(void) {
 
     // Read PC4 while it is high (while the independent reference isn't found)
     while (1) {
+        UARTSendString("outside if\n");
         if (!GPIOPinRead(GPIO_PORTC_BASE, GPIO_PIN_4)) {
             resetYawSlots();
             setReferenceYaw(ZERO_YAW);
             lastRefCrossing = ZERO_YAW;
+            UARTSendString("inside if\n");
             break;
         }
     }
@@ -116,7 +118,7 @@ int getDistanceHeight(void) {
 
 
 void updateYaw(void) {
-    int16_t output;
+    uint16_t output;
 
     distanceYaw = referenceYaw - currentYaw; // yaw error signal
     yawErrorIntegrated += distanceYaw * DELTA_T; // integral of yaw error signal
@@ -136,12 +138,12 @@ void updateYaw(void) {
 
 
 void updateHeight(void) {
-    int16_t output;
+    uint16_t output;
 
     distanceHeight = referencePercentHeight - currentPercentHeight; // height error signal
     heightErrorIntegrated += distanceHeight * DELTA_T; // height integral of error signal
 
-    output = (KpMain * distanceHeight) + (KiMain * heightErrorIntegrated);
+    output = (KpMain * distanceHeight) + (KiMain * heightErrorIntegrated) + PWM_MAIN_START_DUTY;
 
     if (output > 98) {
         output = 98;
@@ -168,7 +170,7 @@ void updateControl(void) {
         case (FLYING):
                 updateYaw();
                 updateHeight();
-               break;
+                break;
         case (LANDED):
                 setMainPWM(PWM_MAIN_START_RATE_HZ, PWM_OFF);
                 setTailPWM(PWM_TAIL_START_RATE_HZ, PWM_OFF);
