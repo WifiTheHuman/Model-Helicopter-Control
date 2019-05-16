@@ -465,10 +465,10 @@ main(void)
 
 	    // Send UART Data at 0.5Hz
 	    // SysTick interrupts (2000ms)
-//	    if (UARTFlag) {
-//	        UARTFlag = FLAG_CLEAR;
-//	        UARTSendData(landedADCVal, meanADCVal, yawSlotCount);
-//	    }
+	    if (UARTFlag) {
+	        UARTFlag = FLAG_CLEAR;
+	        UARTSendData(landedADCVal, meanADCVal, yawSlotCount);
+	    }
 
 	    // Poll the buttons at 100Hz. Update their states if necessary.
 	    if (buttonFlag) {

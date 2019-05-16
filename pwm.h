@@ -7,8 +7,8 @@
 #define PWM_DUTY_STEP      5
 #define PWM_RATE_MIN_HZ    50
 #define PWM_RATE_MAX_HZ    400
-#define PWM_MAIN_START_DUTY 50
-#define PWM_TAIL_START_DUTY 60
+#define PWM_MAIN_START_DUTY 5
+#define PWM_TAIL_START_DUTY 12
 #define PWM_DUTY_MIN       5
 #define PWM_DUTY_MAX       95
 #define PWM_DIVIDER_CODE   SYSCTL_PWMDIV_4

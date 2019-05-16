@@ -20,6 +20,9 @@ static double yawErrorIntegrated;
 
 static uint8_t referenceFound;
 
+static int16_t outputMain;
+static int16_t outputTail;
+
 static int referenceYaw;
 static int currentYaw;
 static int lastRefCrossing;
@@ -31,12 +34,10 @@ void findIndependentYawReference(void) {
 
     // Read PC4 while it is high (while the independent reference isn't found)
     while (1) {
-        UARTSendString("outside if\n");
         if (!GPIOPinRead(GPIO_PORTC_BASE, GPIO_PIN_4)) {
             resetYawSlots();
             setReferenceYaw(ZERO_YAW);
             lastRefCrossing = ZERO_YAW;
-            UARTSendString("inside if\n");
             break;
         }
     }
@@ -118,43 +119,49 @@ int getDistanceHeight(void) {
 
 
 void updateYaw(void) {
-    int16_t output;
-
     distanceYaw = referenceYaw - currentYaw; // yaw error signal
     yawErrorIntegrated += distanceYaw * DELTA_T; // integral of yaw error signal
 
-    output = KpTail * distanceYaw;
+    outputTail = KpTail * distanceYaw;
 
-    if (output > 98) {
-        output = 98;
+    if (outputTail > 98) {
+        outputTail = 98;
     }
 
-    if (output < 2) {
-        output = 2;
+    if (outputTail < 2) {
+        outputTail = 2;
     }
 
-    setTailPWM(PWM_TAIL_START_RATE_HZ, output);
+    setTailPWM(PWM_TAIL_START_RATE_HZ, outputTail);
 }
 
 
 void updateHeight(void) {
-    int16_t output;
-
     distanceHeight = referencePercentHeight - currentPercentHeight; // height error signal
     heightErrorIntegrated += distanceHeight * DELTA_T; // height integral of error signal
 
-    output = (KpMain * distanceHeight) + (KiMain * heightErrorIntegrated);
+    outputMain = (KpMain * distanceHeight) + (KiMain * heightErrorIntegrated);
 
-    if (output > 98) {
-        output = 98;
+    if (outputMain > 98) {
+        outputMain = 98;
     }
 
-    if (output < 2) {
-        output = 2;
+    if (outputMain < 2) {
+        outputMain = 2;
     }
 
-    setMainPWM(PWM_MAIN_START_RATE_HZ, output);
+    setMainPWM(PWM_MAIN_START_RATE_HZ, outputMain);
 }
+
+int16_t getOutputMain(void) {
+    return outputMain;
+}
+
+
+int16_t getOutputTail(void) {
+    return outputTail;
+}
+
 
 void updateControl(void) {
     switch (currentMode) {
