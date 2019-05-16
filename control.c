@@ -126,7 +126,7 @@ void updateYaw(void) {
 
     yawErrorPrevious = yawError;
 
-    outputTail = (KpTail * yawError) + (KiTail * yawErrorIntegrated);
+    outputTail = (KpTail * yawError) + (KiTail * yawErrorIntegrated) + (KdTail * yawErrorDerivative);
 
     if (outputTail > 98) {
         outputTail = 98;
@@ -147,7 +147,7 @@ void updateHeight(void) {
 
     heightErrorPrevious = heightError;
 
-    outputMain = (KpMain * heightError) + (KiMain * heightErrorIntegrated);
+    outputMain = (KpMain * heightError) + (KiMain * heightErrorIntegrated) + (KdMain * heightErrorDerivative);
 
     if (outputMain > 98) {
         outputMain = 98;
