@@ -39,8 +39,6 @@ void findIndependentYawReference(void) {
         lastRefCrossing = ZERO_YAW;
         setMode(FLYING);
     }
-
-
 }
 
 

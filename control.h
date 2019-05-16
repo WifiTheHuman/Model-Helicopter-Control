@@ -11,11 +11,11 @@
 
 #define DELTA_T 0.01
 
-#define KpMain 2.5
+#define KpMain 2.0
 #define KiMain 0.001
 #define KdMain 0.05
 
-#define KpTail 0.8
+#define KpTail 1.2
 #define KiTail 0.001
 #define KdTail 0.05
 
