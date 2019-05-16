@@ -13,11 +13,15 @@ static int currentPercentHeight;
 
 static uint8_t currentMode;
 
-static int distanceHeight;
-static int distanceYaw;
+static int heightError;
+static int yawError;
 
+static double yawErrorPrevious;
+static double heightErrorPrevious;
 static double heightErrorIntegrated;
 static double yawErrorIntegrated;
+static double heightErrorDerivative;
+static double yawErrorDerivative;
 
 static uint8_t referenceFound;
 
@@ -106,20 +110,23 @@ void setMode(uint8_t mode) {
 
 
 int getDistanceYaw(void) {
-    return distanceYaw;
+    return yawError;
 }
 
 
 int getDistanceHeight(void) {
-    return distanceHeight;
+    return heightError;
 }
 
 
 void updateYaw(void) {
-    distanceYaw = referenceYaw - currentYaw; // yaw error signal
-    yawErrorIntegrated += distanceYaw * DELTA_T; // integral of yaw error signal
+    yawError = referenceYaw - currentYaw; // yaw error signal
+    yawErrorIntegrated += yawError * DELTA_T; // integral of yaw error signal
+    yawErrorDerivative = (yawError - yawErrorPrevious) / DELTA_T; // derivative of error signal
 
-    outputTail = KpTail * distanceYaw;
+    yawErrorPrevious = yawError;
+
+    outputTail = (KpTail * yawError) + (KiTail * yawErrorIntegrated);
 
     if (outputTail > 98) {
         outputTail = 98;
@@ -134,10 +141,13 @@ void updateYaw(void) {
 
 
 void updateHeight(void) {
-    distanceHeight = referencePercentHeight - currentPercentHeight; // height error signal
-    heightErrorIntegrated += distanceHeight * DELTA_T; // height integral of error signal
+    heightError = referencePercentHeight - currentPercentHeight; // height error signal
+    heightErrorIntegrated += heightError * DELTA_T; // height integral of error signal
+    heightErrorDerivative = (heightError - heightErrorPrevious) / DELTA_T; // derivative of error signal
 
-    outputMain = (KpMain * distanceHeight) + (KiMain * heightErrorIntegrated);
+    heightErrorPrevious = heightError;
+
+    outputMain = (KpMain * heightError) + (KiMain * heightErrorIntegrated);
 
     if (outputMain > 98) {
         outputMain = 98;
@@ -170,6 +180,8 @@ void updateControl(void) {
                 break;
         case (TAKINGOFF):
                 findIndependentYawReference();
+                updateYaw();
+                updateHeight();
                 break;
         case (FLYING):
                 updateYaw();
