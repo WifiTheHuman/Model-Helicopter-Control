@@ -118,7 +118,7 @@ int getDistanceHeight(void) {
 
 
 void updateYaw(void) {
-    uint16_t output;
+    int16_t output;
 
     distanceYaw = referenceYaw - currentYaw; // yaw error signal
     yawErrorIntegrated += distanceYaw * DELTA_T; // integral of yaw error signal
@@ -138,12 +138,12 @@ void updateYaw(void) {
 
 
 void updateHeight(void) {
-    uint16_t output;
+    int16_t output;
 
     distanceHeight = referencePercentHeight - currentPercentHeight; // height error signal
     heightErrorIntegrated += distanceHeight * DELTA_T; // height integral of error signal
 
-    output = (KpMain * distanceHeight) + (KiMain * heightErrorIntegrated) + PWM_MAIN_START_DUTY;
+    output = (KpMain * distanceHeight) + (KiMain * heightErrorIntegrated);
 
     if (output > 98) {
         output = 98;
