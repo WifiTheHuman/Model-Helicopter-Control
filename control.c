@@ -31,11 +31,17 @@ static int16_t outputTail;
 static int referenceYaw;
 static int currentYaw;
 static volatile int lastRefCrossing;
+static int yawFind = 15;
 
 void findIndependentYawReference(void) {
+
     // Begin flying heli, rotate CCW slowly
     setReferenceHeight(TAKE_OFF_HEIGHT);
-    setReferenceYaw(TOTAL_SLOTS);
+    setReferenceYaw(yawFind);
+
+    if (yawError < 2) {
+        yawFind += 15;
+    }
 
     // Read PC4 while it is high (while the independent reference isn't found)
     if (lastRefCrossing != 0) {
@@ -118,6 +124,14 @@ int getDistanceHeight(void) {
     return heightError;
 }
 
+int getClosestRef(void) {
+    if ((currentYaw - lastRefCrossing) < ((lastRefCrossing + TOTAL_SLOTS) - currentYaw)) {
+        return lastRefCrossing;
+    } else {
+        return lastRefCrossing + TOTAL_SLOTS;
+    }
+}
+
 
 void updateYaw(void) {
     yawError = referenceYaw - currentYaw; // yaw error signal
@@ -173,10 +187,13 @@ int16_t getOutputTail(void) {
 void updateControl(void) {
     switch (currentMode) {
         case (LANDING):
-                setReferenceYaw(0);
-                setReferenceHeight(0);
+                int closestRef;
+                closestRef = getClosestRef();
+                setReferenceYaw(closestRef);
                 updateYaw();
-                updateHeight();
+                if (closestRef < currentYaw + 10 && closestRef > currentYaw - 10) {
+                    setReferenceHeight((referencePercentHeight-10));
+                }
                 break;
         case (TAKINGOFF):
                 findIndependentYawReference();
@@ -188,6 +205,7 @@ void updateControl(void) {
                 updateHeight();
                 break;
         case (LANDED):
+                lastRefCrossing = 0;
                 setMainPWM(PWM_MAIN_START_RATE_HZ, PWM_OFF);
                 setTailPWM(PWM_TAIL_START_RATE_HZ, PWM_OFF);
                 break;
