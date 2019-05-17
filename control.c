@@ -37,7 +37,7 @@ void findIndependentYawReference(void) {
     setReferenceHeight(TAKE_OFF_HEIGHT);
     setReferenceYaw(TOTAL_SLOTS);
 
-    // Read PC4 while it is high (while the independent reference isn't found)
+    // If the reference has been crossed (while the independent reference isn't found)
     if (lastRefCrossing != 0) {
         resetYawSlots();
         setReferenceYaw(ZERO_YAW);

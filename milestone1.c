@@ -72,7 +72,7 @@ static uint16_t tailDuty;            // Tail rotor duty cycle
 static uint16_t mainDuty;            // Main rotor duty cycle
 static int currentYawState;          // The current state of the yaw sensors
 static int previousYawState;         // The previous state of the yaw sensors
-int yawSlotCount = ZERO_SLOT_COUNT;  // Init the yaw slot to the zero value
+int yawSlotCount = 0;  // Init the yaw slot to the zero value
 
 
 //*****************************************************************************
@@ -364,7 +364,7 @@ void initYawReferenceSignal(void) {
     // Enable interrupts on PC4
     GPIOIntEnable(GPIO_PORTC_BASE, GPIO_INT_PIN_4);
 
-    // Set interrupts on PC4 as a high level interrupt
+    // Set interrupts on PC4 as a low level interrupt
     GPIOIntTypeSet(GPIO_PORTC_BASE, GPIO_PIN_4, GPIO_FALLING_EDGE);
 
     // Register the interrupt handler
