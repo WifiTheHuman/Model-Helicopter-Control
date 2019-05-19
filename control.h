@@ -11,8 +11,8 @@
 
 #define DELTA_T 0.01
 
-#define KpMain 1.8
-#define KiMain 0.06
+#define KpMain 1.5
+#define KiMain 0.1
 #define KdMain 1.6
 
 #define KpTail 1.0
@@ -41,18 +41,20 @@ void setReferenceHeight(int height);
 
 void setReferenceCCW(void);
 
+char* getMode(void);
+
 void setMode(uint8_t mode);
 
 int getDistanceYaw(void);
 
 int getDistanceHeight(void);
 
+int getReferenceHeight(void);
+
+int getReferenceYaw(void);
+
 void updateYaw(void);
 
 void updateHeight(void);
-
-int16_t getOutputMain(void);
-
-int16_t getOutputTail(void);
 
 void updateControl(void);
