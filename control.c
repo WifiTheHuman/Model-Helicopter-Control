@@ -16,6 +16,8 @@ static uint8_t currentMode;
 static int heightError;
 static int yawError;
 
+static int closestRef = 0;
+
 static double yawErrorPrevious;
 static double heightErrorPrevious;
 static double heightErrorIntegrated;
@@ -187,7 +189,6 @@ int16_t getOutputTail(void) {
 void updateControl(void) {
     switch (currentMode) {
         case (LANDING):
-                int closestRef;
                 closestRef = getClosestRef();
                 setReferenceYaw(closestRef);
                 updateYaw();
