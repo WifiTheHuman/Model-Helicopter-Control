@@ -12,12 +12,12 @@
 #define DELTA_T 0.01
 
 #define KpMain 1.5
-#define KiMain 0.1
-#define KdMain 1.6
+#define KiMain 0.3
+#define KdMain 2.0
 
-#define KpTail 1.0
-#define KiTail 0.06
-#define KdTail 1.0
+#define KpTail 1.7
+#define KiTail 0.3
+#define KdTail 0.5
 
 enum controlStates {LANDING=0, TAKINGOFF, FLYING, LANDED};
 

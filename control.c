@@ -32,13 +32,18 @@ static int outputTail;
 static int referenceYaw;
 static int currentYaw;
 static volatile int lastRefCrossing;
-//static int yawFind = 15;
+static int yawFind = 15;
 
 void findIndependentYawReference(void) {
 
     // Begin flying heli, rotate CCW slowly
     setReferenceHeight(TAKE_OFF_HEIGHT);
-    setReferenceYaw(TOTAL_SLOTS);
+
+    setReferenceYaw(yawFind);
+
+    if (yawError < 2) {
+        yawFind += 15;
+    }
 
     // If the reference has been crossed (while the independent reference isn't found)
     if (lastRefCrossing != 0) {
