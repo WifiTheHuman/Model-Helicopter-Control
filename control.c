@@ -7,6 +7,7 @@
 #include "control.h"
 #include "pwm.h"
 #include "quadrature.h"
+#include "uartHeli.h"
 
 static int referencePercentHeight;
 static int currentPercentHeight;
@@ -24,8 +25,6 @@ static double heightErrorIntegrated;
 static double yawErrorIntegrated;
 static double heightErrorDerivative;
 static double yawErrorDerivative;
-
-static uint8_t referenceFound;
 
 static int16_t outputMain;
 static int16_t outputTail;
@@ -58,6 +57,14 @@ void setLastRefCrossing(int yawSlotCount) {
 
 void setCurrentHeight(int height) {
     currentPercentHeight = height;
+}
+
+
+void setHeightManualLanding(int height) {
+    referencePercentHeight -= height;
+    if (referencePercentHeight < 0) {
+        referencePercentHeight = 0;
+    }
 }
 
 
@@ -207,9 +214,13 @@ void updateControl(void) {
                 closestRef = getClosestRef();
                 setReferenceYaw(closestRef);
                 updateYaw();
-                if (closestRef < currentYaw + 10 && closestRef > currentYaw - 10) {
-                    setReferenceHeight((referencePercentHeight-10));
+                if (closestRef < currentYaw + 5 && closestRef > currentYaw - 5) {
+                    setHeightManualLanding(1);
                 }
+                if (currentPercentHeight == 0) {
+                    setMode(LANDED);
+                }
+                updateHeight();
                 break;
         case (TAKINGOFF):
                 findIndependentYawReference();
