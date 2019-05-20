@@ -46,7 +46,7 @@ calcPercentAltitude(uint16_t landedADCVal, uint16_t meanADCVal)
 int16_t
 calcYawDegrees(int yawSlotCount)
 {
-    uint16_t yawDegrees;
+    int16_t yawDegrees;
     if (yawSlotCount >= 0) {
         yawDegrees = (((yawSlotCount % TOTAL_SLOTS)*MAX_DEGREES)/TOTAL_SLOTS) - HALF_DEGREES;
     } else {

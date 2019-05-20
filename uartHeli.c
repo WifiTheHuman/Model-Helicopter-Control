@@ -44,12 +44,14 @@ UARTSendString(char *message)
 //*****************************************************************************
 void UARTSendData(uint16_t landedADCVal, uint16_t meanADCVal, int yawSlotCount)
 {
-    char UARTOut[60];
+    char UARTOut[100];
 
     // Gets data from the calc functions in display.c then creates a string from the data.
-    usnprintf(UARTOut, sizeof(UARTOut),"PWMMain=%2d | PWMTail=%2d | Yaw=%2d [%2d] | Height=%2d [%2d]\n",
-              getOutputMain(), getOutputTail(), yawSlotCount, getDistanceYaw(),
-              calcPercentAltitude(landedADCVal, meanADCVal), getDistanceHeight());
+    usnprintf(UARTOut, sizeof(UARTOut),"Mode = %s | PWMMain=%2d | PWMTail=%2d | Yaw=%2d [%2d] | Height=%2d [%2d]\n",
+              getMode(),
+              getOutputMain(), getOutputTail(),
+              calcYawDegrees(yawSlotCount), calcYawDegrees(getReferenceYaw),
+              calcPercentAltitude(landedADCVal, meanADCVal), getReferenceHeight());
 
     UARTSendString(UARTOut);
 

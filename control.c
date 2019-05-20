@@ -38,13 +38,9 @@ void findIndependentYawReference(void) {
 
     // Begin flying heli, rotate CCW slowly
     setReferenceHeight(TAKE_OFF_HEIGHT);
-    setReferenceYaw(yawFind);
+    setReferenceYaw(TOTAL_SLOTS);
 
-    if (yawError < 2) {
-        yawFind += 15;
-    }
-
-    // Read PC4 while it is high (while the independent reference isn't found)
+    // If the reference has been crossed (while the independent reference isn't found)
     if (lastRefCrossing != 0) {
         resetYawSlots();
         setReferenceYaw(ZERO_YAW);
@@ -118,6 +114,17 @@ void setReferenceCCW(void) {
     }
 }
 
+char* getMode(void) {
+    if (currentMode == LANDED) {
+        return "Landed";
+    } else if (currentMode == TAKINGOFF) {
+        return "Taking off";
+    } else if (currentMode == FLYING) {
+        return "Flying";
+    } else {
+        return "Landing";
+    }
+}
 
 void setMode(uint8_t mode) {
     currentMode = mode;
@@ -131,6 +138,14 @@ int getDistanceYaw(void) {
 
 int getDistanceHeight(void) {
     return heightError;
+}
+
+int getReferenceHeight(void) {
+    return referencePercentHeight;
+}
+
+int getReferenceYaw(void) {
+    return referenceYaw;
 }
 
 int getClosestRef(void) {
