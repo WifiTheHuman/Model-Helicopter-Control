@@ -165,7 +165,9 @@ void updateYaw(void) {
     yawErrorPrevious = yawError;
 
     outputTail = (KpTail * yawError) + (KiTail * yawErrorIntegrated) + (KdTail * yawErrorDerivative);
-
+    char string[20];
+    usnprintf(string, sizeof(string), "Tail out=%2d Derivitate=%2d Intergral=%2d \n", outputTail, yawErrorDerivative, yawErrorIntegrated);
+    UARTSendString(string);
     if (outputTail > 98) {
         outputTail = 98;
     }
@@ -173,7 +175,6 @@ void updateYaw(void) {
     if (outputTail < 2) {
         outputTail = 2;
     }
-
     setTailPWM(PWM_TAIL_START_RATE_HZ, outputTail);
 }
 

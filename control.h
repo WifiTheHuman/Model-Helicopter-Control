@@ -17,7 +17,7 @@
 
 #define KpTail 1.0
 #define KiTail 0.06
-#define KdTail 2.05
+#define KdTail 1.0
 
 enum controlStates {LANDING=0, TAKINGOFF, FLYING, LANDED};
 
