@@ -41,7 +41,7 @@ void findIndependentYawReference(void) {
 
     setReferenceYaw(yawFind);
 
-    if (yawError < 2) {
+    if (yawError < 10) {
         yawFind += 15;
     }
 
