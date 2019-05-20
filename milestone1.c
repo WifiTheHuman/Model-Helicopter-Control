@@ -191,6 +191,19 @@ void switchIntHandler(void) {
 
 //*****************************************************************************
 //
+// The interrupt handler for the software reset.
+//
+//*****************************************************************************
+void resetIntHandler(void) {
+    GPIOIntClear(GPIO_PORTA_BASE, GPIO_INT_PIN_7);
+
+    // Perform a soft reset
+    SysCtlReset();
+}
+
+
+//*****************************************************************************
+//
 // Initialisation for the clock (incl. SysTick).
 //
 //*****************************************************************************
@@ -385,11 +398,9 @@ void initSliderSwitch(void) {
     // Enable Port A
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
 
+    // Set PA7 as an input
     GPIOPadConfigSet(GPIO_PORTA_BASE, GPIO_PIN_7, GPIO_STRENGTH_4MA, GPIO_PIN_TYPE_STD_WPD);
     GPIODirModeSet(GPIO_PORTF_BASE, GPIO_PIN_7, GPIO_DIR_MODE_IN);
-
-//    // Set pin 7 as an input
-//    GPIOPinTypeGPIOInput(GPIO_PORTA_BASE, GPIO_PIN_7);
 
     // Enable interrupts on PA7
     GPIOIntEnable(GPIO_PORTA_BASE, GPIO_PIN_7);
@@ -399,6 +410,31 @@ void initSliderSwitch(void) {
 
     // Register the interrupt handler
     GPIOIntRegister(GPIO_PORTA_BASE, switchIntHandler);
+}
+
+
+//*****************************************************************************
+//
+// Initialisation for PA6.
+// Calls SysCtlReset (active low).
+//
+//*****************************************************************************
+void initResetButton(void) {
+    // Enable Port A
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
+
+    // Set PA6 as an input
+    GPIOPadConfigSet(GPIO_PORTA_BASE, GPIO_PIN_6, GPIO_STRENGTH_4MA, GPIO_PIN_TYPE_STD_WPD);
+    GPIODirModeSet(GPIO_PORTF_BASE, GPIO_PIN_6, GPIO_DIR_MODE_IN);
+
+    // Enable interrupts on PA6
+    GPIOIntEnable(GPIO_PORTA_BASE, GPIO_PIN_6);
+
+    // Set interrupts on PA6 as falling edge interrupts
+    GPIOIntTypeSet(GPIO_PORTA_BASE, GPIO_PIN_6, GPIO_FALLING_EDGE);
+
+    // Register the interrupt handler
+    GPIOIntRegister(GPIO_PORTA_BASE, resetIntHandler);
 }
 
 
