@@ -163,6 +163,15 @@ void updateYaw(void) {
 }
 
 
+bool canChangeMode(void) {
+    if (currentMode == LANDED || currentMode == FLYING) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+
 void updateHeight(void) {
     heightError = referencePercentHeight - currentPercentHeight; // height error signal
     heightErrorIntegrated += heightError * DELTA_T; // height integral of error signal
