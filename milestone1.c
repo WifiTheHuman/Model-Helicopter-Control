@@ -424,7 +424,7 @@ void initResetButton(void) {
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
 
     // Set PA6 as an input
-    GPIOPadConfigSet(GPIO_PORTA_BASE, GPIO_PIN_6, GPIO_STRENGTH_4MA, GPIO_PIN_TYPE_STD_WPD);
+    GPIOPadConfigSet(GPIO_PORTA_BASE, GPIO_PIN_6, GPIO_STRENGTH_4MA, GPIO_PIN_TYPE_STD_WPU);
     GPIODirModeSet(GPIO_PORTF_BASE, GPIO_PIN_6, GPIO_DIR_MODE_IN);
 
     // Enable interrupts on PA6

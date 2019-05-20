@@ -191,6 +191,29 @@ bool canChangeMode(void) {
 }
 
 
+void controlReset(void) {
+    resetYawSlots();
+
+    referencePercentHeight = 0;
+    currentPercentHeight = 0;
+    heightError = 0;
+    yawError = 0;
+    closestRef = 0;
+    yawErrorPrevious = 0;
+    heightErrorPrevious = 0;
+    heightErrorIntegrated = 0;
+    yawErrorIntegrated = 0;
+    heightErrorDerivative = 0;
+    yawErrorDerivative = 0;
+    outputMain = 0;
+    outputTail = 0;
+    referenceYaw = 0;
+    currentYaw = 0;
+    lastRefCrossing = 0;
+    yawFind = 15;
+}
+
+
 void updateHeight(void) {
     heightError = referencePercentHeight - currentPercentHeight; // height error signal
     heightErrorIntegrated += heightError * DELTA_T; // height integral of error signal
@@ -231,6 +254,7 @@ void updateControl(void) {
                     setHeightManualLanding(1);
                 }
                 if (currentPercentHeight == 0) {
+                    controlReset();
                     setMode(LANDED);
                 }
                 updateHeight();
