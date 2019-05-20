@@ -11,12 +11,12 @@
 
 #define DELTA_T 0.01
 
-#define KpMain 1.0
+#define KpMain 1.5
 #define KiMain 0.1
 #define KdMain 1.6
 
 #define KpTail 1.0
-#define KiTail 0.09
+#define KiTail 0.06
 #define KdTail 2.05
 
 enum controlStates {LANDING=0, TAKINGOFF, FLYING, LANDED};
@@ -55,6 +55,12 @@ int getReferenceYaw(void);
 
 void updateYaw(void);
 
+bool canChangeMode(void);
+
 void updateHeight(void);
+
+int getOutputMain(void);
+
+int getOutputTail(void);
 
 void updateControl(void);

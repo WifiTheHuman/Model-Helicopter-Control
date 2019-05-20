@@ -50,7 +50,7 @@ void UARTSendData(uint16_t landedADCVal, uint16_t meanADCVal, int yawSlotCount)
     usnprintf(UARTOut, sizeof(UARTOut),"Mode = %s | PWMMain=%2d | PWMTail=%2d | Yaw=%2d [%2d] | Height=%2d [%2d]\n",
               getMode(),
               getOutputMain(), getOutputTail(),
-              calcYawDegrees(yawSlotCount), calcYawDegrees(getReferenceYaw),
+              calcYawDegrees(yawSlotCount), calcYawDegrees(getReferenceYaw()),
               calcPercentAltitude(landedADCVal, meanADCVal), getReferenceHeight());
 
     UARTSendString(UARTOut);

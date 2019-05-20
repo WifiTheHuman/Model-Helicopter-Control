@@ -26,13 +26,13 @@ static double yawErrorIntegrated;
 static double heightErrorDerivative;
 static double yawErrorDerivative;
 
-static int16_t outputMain;
-static int16_t outputTail;
+static int outputMain;
+static int outputTail;
 
 static int referenceYaw;
 static int currentYaw;
 static volatile int lastRefCrossing;
-static int yawFind = 15;
+//static int yawFind = 15;
 
 void findIndependentYawReference(void) {
 
@@ -207,12 +207,12 @@ void updateHeight(void) {
     setMainPWM(PWM_MAIN_START_RATE_HZ, outputMain);
 }
 
-int16_t getOutputMain(void) {
+int getOutputMain(void) {
     return outputMain;
 }
 
 
-int16_t getOutputTail(void) {
+int getOutputTail(void) {
     return outputTail;
 }
 

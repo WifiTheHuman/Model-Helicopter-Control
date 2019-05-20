@@ -50,7 +50,7 @@
 #define BUFFER_FILL_DELAY 6
 #define BUF_SIZE 40
 #define SAMPLE_RATE_HZ 100
-#define UART_SEND_PERIOD 200
+#define UART_SEND_PERIOD 25
 #define DISPLAY_PERIOD 25
 #define ZERO_SLOT_COUNT 224
 #define CHANNEL_A GPIO_PIN_0
@@ -177,11 +177,14 @@ void yawRefSignalIntHandler(void) {
 void switchIntHandler(void) {
      GPIOIntClear(GPIO_PORTA_BASE, GPIO_INT_PIN_7); // Clear the interrupt
 
-     // Check if the edge was rising or falling, set the helicopter mode.
-     if (GPIOPinRead(GPIO_PORTA_BASE, GPIO_PIN_7)) {
-         setMode(TAKINGOFF);
-     } else {
-         setMode(LANDING);
+     // Check the helicopter isn't currently landing or taking off
+     if (canChangeMode()) {
+         // Check if the edge was rising or falling, set the helicopter mode.
+         if (GPIOPinRead(GPIO_PORTA_BASE, GPIO_PIN_7)) {
+             setMode(TAKINGOFF);
+         } else {
+             setMode(LANDING);
+         }
      }
 }
 
