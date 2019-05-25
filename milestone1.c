@@ -52,7 +52,6 @@
 #define SAMPLE_RATE_HZ 100
 #define UART_SEND_PERIOD 25
 #define DISPLAY_PERIOD 25
-#define ZERO_SLOT_COUNT 224
 #define CHANNEL_A GPIO_PIN_0
 #define CHANNEL_B GPIO_PIN_1
 #define FLAG_CLEAR 0
@@ -186,19 +185,6 @@ void switchIntHandler(void) {
              setMode(LANDING);
          }
      }
-}
-
-
-//*****************************************************************************
-//
-// The interrupt handler for the software reset.
-//
-//*****************************************************************************
-void resetIntHandler(void) {
-    GPIOIntClear(GPIO_PORTA_BASE, GPIO_INT_PIN_7);
-
-    // Perform a soft reset
-    SysCtlReset();
 }
 
 
@@ -410,31 +396,6 @@ void initSliderSwitch(void) {
 
     // Register the interrupt handler
     GPIOIntRegister(GPIO_PORTA_BASE, switchIntHandler);
-}
-
-
-//*****************************************************************************
-//
-// Initialisation for PA6.
-// Calls SysCtlReset (active low).
-//
-//*****************************************************************************
-void initResetButton(void) {
-    // Enable Port A
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
-
-    // Set PA6 as an input
-    GPIOPadConfigSet(GPIO_PORTA_BASE, GPIO_PIN_6, GPIO_STRENGTH_4MA, GPIO_PIN_TYPE_STD_WPU);
-    GPIODirModeSet(GPIO_PORTF_BASE, GPIO_PIN_6, GPIO_DIR_MODE_IN);
-
-    // Enable interrupts on PA6
-    GPIOIntEnable(GPIO_PORTA_BASE, GPIO_PIN_6);
-
-    // Set interrupts on PA6 as falling edge interrupts
-    GPIOIntTypeSet(GPIO_PORTA_BASE, GPIO_PIN_6, GPIO_FALLING_EDGE);
-
-    // Register the interrupt handler
-    GPIOIntRegister(GPIO_PORTA_BASE, resetIntHandler);
 }
 
 

@@ -83,5 +83,15 @@ checkButtons(void)
         case RELEASED:
             break;
     }
+
+    butState = checkButton(RESET);
+    // If UP button has been pushed, decrement the reference altitude by 10%
+    switch (butState) {
+        case PUSHED:
+            SysCtlReset();
+            break;
+        case RELEASED:
+            break;
+    }
 }
 

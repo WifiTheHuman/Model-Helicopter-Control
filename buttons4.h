@@ -11,6 +11,7 @@
 //
 // P.J. Bones UCECE
 // Last modified:  7.2.2018
+// Last modified:  7.2.2018 - Reset button added (PA6)
 // 
 // *******************************************************
 
@@ -20,7 +21,7 @@
 //*****************************************************************************
 // Constants
 //*****************************************************************************
-enum butNames {UP = 0, DOWN, LEFT, RIGHT, NUM_BUTS};
+enum butNames {UP = 0, DOWN, LEFT, RIGHT, RESET, NUM_BUTS};
 enum butStates {RELEASED = 0, PUSHED, NO_CHANGE};
 // UP button
 #define UP_BUT_PERIPH  SYSCTL_PERIPH_GPIOE
@@ -42,6 +43,11 @@ enum butStates {RELEASED = 0, PUSHED, NO_CHANGE};
 #define RIGHT_BUT_PORT_BASE  GPIO_PORTF_BASE
 #define RIGHT_BUT_PIN  GPIO_PIN_0
 #define RIGHT_BUT_NORMAL  true
+// RESET button
+#define RESET_BUT_PERIPH SYSCTL_PERIPH_GPIOA
+#define RESET_BUT_PORT_BASE GPIO_PORTA_BASE
+#define RESET_BUT_PIN  GPIO_PIN_6
+#define RESET_BUT_NORMAL  true
 
 #define NUM_BUT_POLLS 3
 // Debounce algorithm: A state machine is associated with each button.

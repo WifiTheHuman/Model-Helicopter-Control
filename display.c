@@ -118,10 +118,10 @@ updateDisplay(uint8_t displayState,  uint16_t landedADCVal, uint16_t meanADCVal,
             clearDisplay();
             break;
     }
-    usnprintf(string, sizeof(string), "HeightD = %5d ", getDistanceHeight());
+    usnprintf(string, sizeof(string), "HeightD = %5d ", getErrorHeight());
     OLEDStringDraw(string, OLED_COL_ZERO, OLED_ROW_ONE);
 
-    usnprintf(string, sizeof(string), "YawD = %5d ", getDistanceYaw());
+    usnprintf(string, sizeof(string), "YawD = %5d ", getErrorYaw());
     OLEDStringDraw(string, OLED_COL_ZERO, OLED_ROW_TWO);
 
     usnprintf(string, sizeof(string), "Yaw = %5d ", calcYawDegrees(yawSlotCount));
