@@ -21,7 +21,7 @@
 #include "driverlib/gpio.h"
 #include "control.h"
 #include "pwm.h"
-#include "quadrature.h"
+#include "yaw.h"
 #include "uartHeli.h"
 
 static int referencePercentHeight;              // Altitude reference
@@ -44,8 +44,8 @@ static double yawErrorDerivative;
 static double yawErrorPrevious;
 static double yawErrorIntegrated;
 
-static int outputMain;                          // Output main rotor PWM
-static int outputTail;                          // Output tail rotor PWM
+static int outputMain;                          // Output main rotor PWM duty cycle
+static int outputTail;                          // Output tail rotor PWM duty cycle
 
 static volatile int lastRefCrossing;            // Slot count of last crossing of the independent yaw reference
 static int yawFind = REFERENCE_FIND_INCREMENT;  // For finding the independent reference

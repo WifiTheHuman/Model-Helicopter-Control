@@ -12,69 +12,35 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "utils/ustdlib.h"
 #include "OrbitOLED/OrbitOLEDInterface.h"
 #include "display.h"
-#include "quadrature.h"
+#include "yaw.h"
 #include "control.h"
-#include <stdio.h>
-#include <stdlib.h>
+#include "altitude.h"
 
 
 //*****************************************************************************
 //
-// Returns the helicopters altitude as a percentage.
+// Displays the main and tail rotor PWM values.
 //
 //*****************************************************************************
-int16_t
-calcPercentAltitude(uint16_t landedADCVal, uint16_t meanADCVal)
-{
-    // Calculate the number of ADC bits above the zero altitude point
-    int16_t ADCAltitudeBits = landedADCVal - meanADCVal;
-
-    // Calculate the altitude as a percentage of maximum altitude
-    int16_t percentAltitude = (ADCAltitudeBits * PERCENT_CONVERSION) / MAX_ALTITUDE_BITS;
-    return percentAltitude;
-}
-
-
-//*****************************************************************************
-//
-// Returns the yaw angle in degrees
-//
-//*****************************************************************************
-int16_t
-calcYawDegrees(int yawSlotCount)
-{
-    int16_t yawDegrees;
-    if (yawSlotCount >= 0) {
-        yawDegrees = (((yawSlotCount % TOTAL_SLOTS)*MAX_DEGREES)/TOTAL_SLOTS) - HALF_DEGREES;
-    } else {
-        yawDegrees = ((((yawSlotCount % TOTAL_SLOTS)*MAX_DEGREES)/TOTAL_SLOTS) + MAX_DEGREES) - HALF_DEGREES;
-    }
-
-    // Copy the slot count into string
-    return yawDegrees;
-}
-
-
-
-void
-displayPWM(uint32_t frequency, uint32_t duty_cycle)
-{
+void displayPWM(void) {
     // Buffers for strings displayed
-    char freqString[17];
-    char dutyString[17];
+    char mainDutyString[OLED_STRING_BITS];
+    char tailDutyString[OLED_STRING_BITS];
 
     clearDisplay();
 
     // Copy PWM info into buffers
-    usnprintf (freqString, sizeof(freqString), "FREQ: - %d   Hz", frequency);
-    usnprintf (dutyString, sizeof(dutyString), "DUTY: - %d   %", duty_cycle);
+    usnprintf (mainDutyString, sizeof(mainDutyString), "Main Duty: - %d", getOutputMain());
+    usnprintf (tailDutyString, sizeof(tailDutyString), "Tail Duty: - %d", getOutputTail());
 
     // Show PWM info on display
-    OLEDStringDraw(freqString, OLED_COL_ZERO, OLED_ROW_ONE);
-    OLEDStringDraw(dutyString, OLED_COL_ZERO, OLED_ROW_TWO);
+    OLEDStringDraw(mainDutyString, OLED_COL_ZERO, OLED_ROW_TWO);
+    OLEDStringDraw(tailDutyString, OLED_COL_ZERO, OLED_ROW_THREE);
 }
 
 
@@ -83,9 +49,7 @@ displayPWM(uint32_t frequency, uint32_t duty_cycle)
 // Clears the display.
 //
 //*****************************************************************************
-void
-clearDisplay(void)
-{
+void clearDisplay(void) {
     char* blankLine = "                ";
     OLEDStringDraw(blankLine, OLED_COL_ZERO, OLED_ROW_ZERO);
     OLEDStringDraw(blankLine, OLED_COL_ZERO, OLED_ROW_ONE);
@@ -97,14 +61,17 @@ clearDisplay(void)
 //*****************************************************************************
 //
 // Updates the display based on the FSM state.
-// Displays all data after collecting from the calculator functions
+// Displays all data after collecting from the calculator functions.
+// Row 1 of orbit LED is the altitude in %.
+// Row 2 is the yaw in degrees.
+// Row 3 is the main rotor PWM.
+// Row 4 is the tail rotor PWM.
 //
 //*****************************************************************************
-void
-updateDisplay(uint8_t displayState,  uint16_t landedADCVal, uint16_t meanADCVal, int yawSlotCount,
-              uint16_t tailDuty, uint16_t mainDuty)
-{
-    char string[17];
+void updateDisplay(uint8_t displayState,  uint16_t landedADCVal, uint16_t meanADCVal, int yawSlotCount) {
+    char string[OLED_STRING_BITS];
+
+    // Display the altitude or clear display based on FSM state
     switch (displayState) {
         case (PERCENT):
             usnprintf(string, sizeof(string), "Altitude = %3d%%", calcPercentAltitude(landedADCVal, meanADCVal));
@@ -118,12 +85,11 @@ updateDisplay(uint8_t displayState,  uint16_t landedADCVal, uint16_t meanADCVal,
             clearDisplay();
             break;
     }
-    usnprintf(string, sizeof(string), "HeightD = %5d ", getErrorHeight());
+
+    // Display the yaw in degrees
+    usnprintf(string, sizeof(string), "Yaw = %5d ", calcYawDegrees(yawSlotCount));
     OLEDStringDraw(string, OLED_COL_ZERO, OLED_ROW_ONE);
 
-    usnprintf(string, sizeof(string), "YawD = %5d ", getErrorYaw());
-    OLEDStringDraw(string, OLED_COL_ZERO, OLED_ROW_TWO);
-
-    usnprintf(string, sizeof(string), "Yaw = %5d ", calcYawDegrees(yawSlotCount));
-    OLEDStringDraw(string, OLED_COL_ZERO, OLED_ROW_THREE);
+    // Display the main and tail rotor PWM
+    displayPWM();
 }

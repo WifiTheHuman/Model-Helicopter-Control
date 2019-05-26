@@ -26,8 +26,7 @@
 // landed altitude.
 //
 //*****************************************************************************
-void
-setLandedAltitude(uint16_t* landedADCVal, uint16_t meanADCVal);
+void setLandedAltitude(uint16_t* landedADCVal, uint16_t meanADCVal);
 
 
 //*****************************************************************************
@@ -35,7 +34,6 @@ setLandedAltitude(uint16_t* landedADCVal, uint16_t meanADCVal);
 // Polls the buttons and carries out the desired action.
 //
 //*****************************************************************************
-void
-checkButtons(void);
+void checkButtons(void);
 
 #endif /*DISPLAY_H_*/

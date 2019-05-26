@@ -1,13 +1,15 @@
-#ifndef QUADRATURE_H_
-#define QUADRATURE_H_
+#ifndef YAW_H_
+#define YAW_H_
 
 
 // Possible states of the yaw sensors
 enum yawStates {B_LOW_A_LOW = 0, B_LOW_A_HIGH, B_HIGH_A_LOW, B_HIGH_A_HIGH};
 
-#define MAX_SLOTS (2*112)
-#define MIN_SLOTS (-2*112)
 #define TOTAL_SLOTS 448
+#define YAW_INCREMENT 1
+#define YAW_DECREMENT 1
+#define MAX_DEGREES 360
+#define HALF_DEGREES 180
 
 
 //*****************************************************************************
@@ -17,7 +19,14 @@ enum yawStates {B_LOW_A_LOW = 0, B_LOW_A_HIGH, B_HIGH_A_LOW, B_HIGH_A_HIGH};
 // number is exceeded (i.e. 360 degrees rotation performed).
 //
 //*****************************************************************************
-void
-quadratureDecode(int* yawSlotCount, int currentYawState, int previousYawState);
+void quadratureDecode(int* yawSlotCount, int currentYawState, int previousYawState);
 
-#endif /*QUADRATURE_H_*/
+
+//*****************************************************************************
+//
+// Returns the yaw in degrees of the helicopter
+//
+//*****************************************************************************
+int16_t calcYawDegrees(int yawSlotCount);
+
+#endif /*YAW_H_*/

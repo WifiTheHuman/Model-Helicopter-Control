@@ -1,13 +1,15 @@
 //*****************************************************************************
 //
-// milestone1.c - Main program which satisfies the specs for Milestone 1 of the
-// ENCE361 helicopter project.
+// main.c - Main program for the ENCE361 2019 Helicopter Project.
+// Implements PID control on the altitude and yaw of an RC helicopter.
+// Uses PWM on the main and tail rotors. Uses ADC to sense the altitude of the
+// helicopter. Uses quadrature to track the yaw of the helicopter.
 //
 // Joshua Hulbert, Josiah Craw, Yifei Ma.
 //
 // Adapted from ADCDemo1.c by Phil Bones.
 //
-// Last Edited 7/05/19
+// Last Edited 26/05/19
 //
 //*****************************************************************************
 
@@ -39,23 +41,32 @@
 #include "circBufT.h"
 #include "display.h"
 #include "userInput.h"
-#include "quadrature.h"
+#include "yaw.h"
 #include "uartHeli.h"
 #include "pwm.h"
 #include "control.h"
+#include "altitude.h"
 
 //*****************************************************************************
 // Constants
 //*****************************************************************************
 #define BUFFER_FILL_DELAY 6
 #define BUF_SIZE 40
+
 #define SAMPLE_RATE_HZ 100
+
 #define UART_SEND_PERIOD 25
 #define DISPLAY_PERIOD 25
+
 #define CHANNEL_A GPIO_PIN_0
 #define CHANNEL_B GPIO_PIN_1
+
 #define FLAG_CLEAR 0
 #define FLAG_SET 1
+#define FLAG_COUNT_ZERO 0
+
+#define ADC_SEQUENCE_THREE 3
+#define ADC_CHANNEL_ZERO 0
 
 //*****************************************************************************
 // Global variables
@@ -67,8 +78,6 @@ static uint8_t displayFlag;          // Flag for refreshing display
 static uint8_t controlUpdateFlag;    // Flag for refreshing control system
 static uint8_t UARTFlag;             // Flag for UART sending
 static uint8_t buttonFlag;           // Flag for button polling
-static uint16_t tailDuty;            // Tail rotor duty cycle
-static uint16_t mainDuty;            // Main rotor duty cycle
 static int currentYawState;          // The current state of the yaw sensors
 static int previousYawState;         // The previous state of the yaw sensors
 int yawSlotCount = 0;  // Init the yaw slot to the zero value
@@ -80,10 +89,9 @@ int yawSlotCount = 0;  // Init the yaw slot to the zero value
 //
 //*****************************************************************************
 void
-SysTickIntHandler(void)
-{
+SysTickIntHandler(void) {
     // Initiate a conversion
-    ADCProcessorTrigger(ADC0_BASE, 3); 
+    ADCProcessorTrigger(ADC0_BASE, ADC_SEQUENCE_THREE);
 
     g_ulDispCnt++;
     g_ulUARTCnt++;
@@ -94,15 +102,15 @@ SysTickIntHandler(void)
     // Set the flag for the PID controller
     controlUpdateFlag = FLAG_SET;
 
-    // Set the flag for display refreshing every 25 SysTick interrupts
+    // Set the flag for display refreshing every 25 SysTick interrupts (250ms)
     if (g_ulDispCnt >= DISPLAY_PERIOD) {
-        g_ulDispCnt = 0;
+        g_ulDispCnt = FLAG_COUNT_ZERO;
         displayFlag = FLAG_SET;
     }
 
-    // Set the flag to send UART data
+    // Set the flag to send UART data every 25 SysTick interrupts (250ms)
     if (g_ulUARTCnt >= UART_SEND_PERIOD) {
-        g_ulUARTCnt = 0;
+        g_ulUARTCnt = FLAG_COUNT_ZERO;
         UARTFlag = FLAG_SET;
     }
 }
@@ -115,19 +123,18 @@ SysTickIntHandler(void)
 //
 //*****************************************************************************
 void
-ADCIntHandler(void)
-{
+ADCIntHandler(void) {
 	uint32_t ulValue;
 	
 	// Get the single sample from ADC0.  ADC_BASE is defined in
 	// inc/hw_memmap.h
-	ADCSequenceDataGet(ADC0_BASE, 3, &ulValue);
+	ADCSequenceDataGet(ADC0_BASE, ADC_SEQUENCE_THREE, &ulValue);
 
 	// Place it in the circular buffer (advancing write index)
 	writeCircBuf(&g_inBuffer, ulValue);
 
 	// Clean up, clearing the interrupt
-	ADCIntClear(ADC0_BASE, 3);                          
+	ADCIntClear(ADC0_BASE, ADC_SEQUENCE_THREE);
 }
 
 
@@ -138,8 +145,7 @@ ADCIntHandler(void)
 //
 //*****************************************************************************
 void
-quadratureIntHandler(void)
-{
+quadratureIntHandler(void) {
     GPIOIntClear(GPIO_PORTB_BASE, GPIO_INT_PIN_0 | GPIO_INT_PIN_1); // Clear the interrupt
 
     previousYawState = currentYawState; // Save the previous state
@@ -194,8 +200,7 @@ void switchIntHandler(void) {
 //
 //*****************************************************************************
 void
-initClock(void)
-{
+initClock(void) {
     // Set the clock rate to 20 MHz
     SysCtlClockSet(SYSCTL_SYSDIV_10 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN |
                    SYSCTL_XTAL_16MHZ);
@@ -218,41 +223,11 @@ initClock(void)
 
 //*****************************************************************************
 //
-// Initialisation for UART - 8 bits, 1 stop bit, no parity.
-// Taken from uartDemo.c by Phil Bones.
-//
-//*****************************************************************************
-void
-initialiseUSB_UART(void)
-{
-    //
-    // Enable GPIO port A which is used for UART0 pins.
-    //
-    SysCtlPeripheralEnable(UART_USB_PERIPH_UART);
-    SysCtlPeripheralEnable(UART_USB_PERIPH_GPIO);
-    //
-    // Select the alternate (UART) function for these pins.
-    //
-    GPIOPinTypeUART(UART_USB_GPIO_BASE, UART_USB_GPIO_PINS);
-    GPIOPinConfigure (GPIO_PA0_U0RX);
-    GPIOPinConfigure (GPIO_PA1_U0TX);
-
-    UARTConfigSetExpClk(UART_USB_BASE, SysCtlClockGet(), BAUD_RATE,
-                        UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE |
-                        UART_CONFIG_PAR_NONE);
-    UARTFIFOEnable(UART_USB_BASE);
-    UARTEnable(UART_USB_BASE);
-}
-
-
-//*****************************************************************************
-//
 // Initialisation for the ADC.
 //
 //*****************************************************************************
 void 
-initADC(void)
-{
+initADC(void) {
 
     // The ADC0 peripheral must be enabled for configuration and use.
     SysCtlPeripheralEnable(SYSCTL_PERIPH_ADC0);
@@ -260,7 +235,7 @@ initADC(void)
     // Enable sample sequence 3 with a processor signal trigger.  Sequence 3
     // will do a single sample when the processor sends a signal to start the
     // conversion.
-    ADCSequenceConfigure(ADC0_BASE, 3, ADC_TRIGGER_PROCESSOR, 0);
+    ADCSequenceConfigure(ADC0_BASE, ADC_SEQUENCE_THREE, ADC_TRIGGER_PROCESSOR, ADC_CHANNEL_ZERO);
   
 
     // Configure step 0 on sequence 3.  Sample channel 0 (ADC_CTL_CH0) in
@@ -271,17 +246,17 @@ initADC(void)
     // sequence 0 has 8 programmable steps.  Since we are only doing a single
     // conversion using sequence 3 we will only configure step 0.  For more
     // on the ADC sequences and steps, refer to the LM3S1968 datasheet.
-    ADCSequenceStepConfigure(ADC0_BASE, 3, 0, ADC_CTL_CH9 | ADC_CTL_IE |
+    ADCSequenceStepConfigure(ADC0_BASE, ADC_SEQUENCE_THREE, ADC_CHANNEL_ZERO, ADC_CTL_CH9 | ADC_CTL_IE |
                              ADC_CTL_END);    
                              
     // Since sample sequence 3 is now configured, it must be enabled.
-    ADCSequenceEnable(ADC0_BASE, 3);
+    ADCSequenceEnable(ADC0_BASE, ADC_SEQUENCE_THREE);
   
     // Register the interrupt handler
-    ADCIntRegister(ADC0_BASE, 3, ADCIntHandler);
+    ADCIntRegister(ADC0_BASE, ADC_SEQUENCE_THREE, ADCIntHandler);
   
     // Enable interrupts for ADC0 sequence 3 (clears any outstanding interrupts)
-    ADCIntEnable(ADC0_BASE, 3);
+    ADCIntEnable(ADC0_BASE, ADC_SEQUENCE_THREE);
 }
 
 
@@ -291,8 +266,7 @@ initADC(void)
 //
 //*****************************************************************************
 void
-quadratureInitialise(void)
-{
+quadratureInitialise(void) {
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB); // Enable Port B
 
     // Set PB0 and PB1 as inputs
@@ -309,44 +283,6 @@ quadratureInitialise(void)
 
     // Read the values on PB0 and PB1
     currentYawState = GPIOPinRead(GPIO_PORTB_BASE, CHANNEL_A | CHANNEL_B);
-}
-
-
-//*****************************************************************************
-//
-// Initialisation for PWM (PWM Module 0 PWM 7 for main rotor and
-// PWM module 1 PWM 5 for the tail rotor).
-//
-//*****************************************************************************
-void
-initialisePWM(void)
-{
-    SysCtlPeripheralEnable(PWM_MAIN_PERIPH_PWM);
-    SysCtlPeripheralEnable(PWM_MAIN_PERIPH_GPIO);
-
-    SysCtlPeripheralEnable(PWM_TAIL_PERIPH_PWM);
-    SysCtlPeripheralEnable(PWM_TAIL_PERIPH_GPIO);
-
-    GPIOPinConfigure(PWM_MAIN_GPIO_CONFIG);
-    GPIOPinConfigure(PWM_TAIL_GPIO_CONFIG);
-    GPIOPinTypePWM(PWM_MAIN_GPIO_BASE, PWM_MAIN_GPIO_PIN);
-    GPIOPinTypePWM(PWM_TAIL_GPIO_BASE, PWM_TAIL_GPIO_PIN);
-
-    PWMGenConfigure(PWM_MAIN_BASE, PWM_MAIN_GEN,
-                    PWM_GEN_MODE_UP_DOWN | PWM_GEN_MODE_NO_SYNC);
-    PWMGenConfigure(PWM_TAIL_BASE, PWM_TAIL_GEN,
-                       PWM_GEN_MODE_UP_DOWN | PWM_GEN_MODE_NO_SYNC);
-
-    // Set the initial PWM parameters
-    setMainPWM(PWM_MAIN_START_RATE_HZ, PWM_OFF);
-    setTailPWM(PWM_TAIL_START_RATE_HZ, PWM_OFF);
-
-    PWMGenEnable(PWM_MAIN_BASE, PWM_MAIN_GEN);
-    PWMGenEnable(PWM_TAIL_BASE, PWM_TAIL_GEN);
-
-    // Disable the output.  Repeat this call with 'true' to turn O/P on.
-    PWMOutputState(PWM_MAIN_BASE, PWM_MAIN_OUTBIT, false);
-    PWMOutputState(PWM_TAIL_BASE, PWM_TAIL_OUTBIT, false);
 }
 
 
@@ -409,10 +345,7 @@ void resetYawSlots(void) {
 }
 
 
-int
-main(void)
-
-{
+int main(void) {
     uint16_t landedADCVal;
     uint16_t meanADCVal;
     uint8_t currentDisplayState = PERCENT;
@@ -442,12 +375,17 @@ main(void)
     // Compute the mean ADC value, set the zero altitude value
     meanADCVal = calcMeanOfContents(&g_inBuffer, BUF_SIZE);
     landedADCVal = meanADCVal;
-    updateDisplay(currentDisplayState, landedADCVal, meanADCVal, yawSlotCount,
-                  tailDuty, mainDuty);
+
+    // Update the display
+    updateDisplay(currentDisplayState, landedADCVal, meanADCVal, yawSlotCount);
+
+    // The helicopter starts in the LANDED mode
     setMode(LANDED);
 
 	while (1)
 	{
+	    // Compute the mean ADC value.
+	    // Disable interrupts for this part to avoid a race condition.
 	    IntMasterDisable();
 	    meanADCVal = calcMeanOfContents(&g_inBuffer, BUF_SIZE);
 	    IntMasterEnable();
@@ -455,28 +393,26 @@ main(void)
 	    setCurrentHeight(calcPercentAltitude(landedADCVal, meanADCVal));
 	    setCurrentYaw(yawSlotCount);
 
-	    // Update the display at 4Hz. displayFlag is set every 25
-	    // SysTick interrupts (250ms).
+	    // Update the display at 4Hz. displayFlag is set every 25 SysTick interrupts (250ms).
 	    if (displayFlag) {
 	        displayFlag = FLAG_CLEAR;
-	        updateDisplay(currentDisplayState, landedADCVal, meanADCVal, yawSlotCount,
-	                      tailDuty, mainDuty);
+	        updateDisplay(currentDisplayState, landedADCVal, meanADCVal, yawSlotCount);
 	    }
 
-	    // Send UART Data at 0.5Hz
-	    // SysTick interrupts (2000ms)
+	    // Send UART Data at 4Hz. UARTFlag is set every 25 SysTick interrupts (250ms).
 	    if (UARTFlag) {
 	        UARTFlag = FLAG_CLEAR;
 	        UARTSendData(landedADCVal, meanADCVal, yawSlotCount);
 	    }
 
 	    // Poll the buttons at 100Hz. Update their states if necessary.
+	    // buttonFlag is set every SysTick interrupt (10ms).
 	    if (buttonFlag) {
 	        buttonFlag = FLAG_CLEAR;
 	        checkButtons();
 	    }
 
-	    // Update the PID controller
+	    // Update the PID controller. controlUpdateFlag is set every SysTick interrupt (10ms).
 	    if (controlUpdateFlag) {
 	        controlUpdateFlag = FLAG_CLEAR;
 	        updateControl();

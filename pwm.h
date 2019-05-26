@@ -41,6 +41,26 @@
 #define PWM_TAIL_GPIO_PIN    GPIO_PIN_1
 
 
+//*****************************************************************************
+//
+// Initialisation for PWM (PWM Module 0 PWM 7 for main rotor and
+// PWM module 1 PWM 5 for the tail rotor).
+//
+//*****************************************************************************
+void initialisePWM(void);
 
-void setMainPWM (uint32_t ui32MainFreq, uint32_t ui32MainDuty);
-void setTailPWM (uint32_t ui32TailFreq, uint32_t ui32TailDuty);
+
+//*****************************************************************************
+//
+// Set the main rotor PWM.
+//
+//*****************************************************************************
+void setMainPWM(uint32_t ui32MainFreq, uint32_t ui32MainDuty);
+
+
+//*****************************************************************************
+//
+// Set the tail rotor PWM.
+//
+//*****************************************************************************
+void setTailPWM(uint32_t ui32TailFreq, uint32_t ui32TailDuty);

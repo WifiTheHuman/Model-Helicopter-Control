@@ -14,6 +14,7 @@
 #include "inc/hw_memmap.h"
 #include "inc/hw_types.h"
 #include "driverlib/gpio.h"
+#include "driverlib/sysctl.h"
 #include "buttons4.h"
 #include "userInput.h"
 #include "control.h"
@@ -25,9 +26,7 @@
 // landed altitude.
 //
 //*****************************************************************************
-void
-setLandedAltitude(uint16_t* landedADCVal, uint16_t meanADCVal)
-{
+void setLandedAltitude(uint16_t* landedADCVal, uint16_t meanADCVal) {
     *landedADCVal = meanADCVal;
 }
 
@@ -37,9 +36,7 @@ setLandedAltitude(uint16_t* landedADCVal, uint16_t meanADCVal)
 // Polls the buttons and carries out the desired action.
 //
 //*****************************************************************************
-void
-checkButtons(void)
-{
+void checkButtons(void) {
     int butState;
 
     updateButtons();
@@ -75,7 +72,7 @@ checkButtons(void)
     }
 
     butState = checkButton(DOWN);
-    // If UP button has been pushed, decrement the reference altitude by 10%
+    // If DOWN button has been pushed, decrement the reference altitude by 10%
     switch (butState) {
         case PUSHED:
             setReferenceDown();
@@ -85,7 +82,7 @@ checkButtons(void)
     }
 
     butState = checkButton(RESET);
-    // If UP button has been pushed, decrement the reference altitude by 10%
+    // If RESET button has been pushed, perform a software reset
     switch (butState) {
         case PUSHED:
             SysCtlReset();

@@ -1,3 +1,6 @@
+#ifndef UARTHELI_H_
+#define UARTHELI_H_
+
 // *******************************************************
 //
 // uartHeli.h
@@ -19,8 +22,30 @@
 #define UART_USB_GPIO_PIN_TX    GPIO_PIN_1
 #define UART_USB_GPIO_PINS      UART_USB_GPIO_PIN_RX | UART_USB_GPIO_PIN_TX
 
-void
-UARTSendString(char *message);
 
-void
-UARTSendData(uint16_t landedADCVal, uint16_t meanADCVal, int yawSlotCount);
+//*****************************************************************************
+//
+// Initialisation for UART - 8 bits, 1 stop bit, no parity.
+// Taken from uartDemo.c by Phil Bones.
+//
+//*****************************************************************************
+void initialiseUSB_UART(void);
+
+
+//*****************************************************************************
+//
+// Uses current helicopter info to generate then send human readable data
+// over UART.
+//
+//*****************************************************************************
+void UARTSendString(char *message);
+
+
+//*****************************************************************************
+//
+// Sends a given string over UART (Based off of code given in the lectures).
+//
+//*****************************************************************************
+void UARTSendData(uint16_t landedADCVal, uint16_t meanADCVal, int yawSlotCount);
+
+#endif /*UARTHELI_H_*/
