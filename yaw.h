@@ -3,6 +3,11 @@
 
 
 // Possible states of the yaw sensors
+// The yaw signals are on pins 0 and 1. GPIOPinRead returns a bit packed
+// byte where the zeroth bit is the state of pin 0, the first bit is the state 
+// of pin 1 on the port, etc. Bits two to seven are not read by the quadrature decoder,
+// and hence their bit in the returned byte is zero. So PB0 low and PB1 low returns 0x00
+// when read, PB0 high and PB1 low returns 0x01 when read etc.
 enum yawStates {B_LOW_A_LOW = 0, B_LOW_A_HIGH, B_HIGH_A_LOW, B_HIGH_A_HIGH};
 
 #define TOTAL_SLOTS 448
