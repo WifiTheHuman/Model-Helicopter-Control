@@ -174,7 +174,8 @@ quadratureIntHandler(void) {
 //*****************************************************************************
 void yawRefSignalIntHandler(void) {
     GPIOIntClear(GPIO_PORTC_BASE, GPIO_INT_PIN_4); // Clear the interrupt
-
+    
+    // Set the last reference crossing value to the current yaw slot count
     setLastRefCrossing(yawSlotCount);
 }
 
