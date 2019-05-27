@@ -151,6 +151,12 @@ quadratureIntHandler(void) {
     previousYawState = currentYawState; // Save the previous state
 
     // Read the values on PB0 and PB1
+    // The yaw signals are on pins 0 and 1. GPIOPinRead returns a bit packed
+    // byte where the zeroth bit is the state of pin 0, the first bit is the state 
+    // of pin 1 on the port, etc. Bits two to seven are not read by the quadrature decoder,
+    // and hence their bit in the returned byte is zero. So PB0 low and PB1 low returns 0x00
+    // when read, PB0 high and PB1 low returns 0x01 when read etc. The returned value will 
+    // therefore match the desired state as given in the yawStates enum (yaw.h)
     currentYawState = (int) GPIOPinRead(GPIO_PORTB_BASE, CHANNEL_A | CHANNEL_B);
 
     // Determine the direction of rotation. Increment or decrement yawSlotCount appropriately.
