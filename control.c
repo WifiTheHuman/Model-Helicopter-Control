@@ -63,7 +63,7 @@ void findIndependentYawReference(void) {
     setReferenceHeight(TAKE_OFF_HEIGHT);
 
     // Begin rotating to find the reference
-    setReferenceYaw(REFERENCE_FIND_INCREMENT);
+    setReferenceYaw(yawFind);
 
     // Rotate more if the error is small enough
     // Helps with stability

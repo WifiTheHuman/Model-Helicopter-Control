@@ -10,8 +10,7 @@
 // LEFT and RIGHT on the Tiva.
 //
 // P.J. Bones UCECE
-// Last modified:  7.2.2018
-// Last modified:  7.2.2018 - Reset button added (PA6)
+// Last modified:  28.5.2018
 // 
 // *******************************************************
 

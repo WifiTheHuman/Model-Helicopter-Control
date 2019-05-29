@@ -11,7 +11,7 @@
 //  the Tiva board) needs special treatment - See PhilsNotesOnTiva.rtf.
 //
 // P.J. Bones UCECE
-// Last modified:  7.2.2018 - Reset button added (PA6)
+// Last modified:  28.5.2018 - Reset button added (PA6)
 // 
 // *******************************************************
 
@@ -97,6 +97,7 @@ initButtons (void)
 // A state change occurs only after NUM_BUT_POLLS consecutive polls have
 // read the pin in the opposite condition, before the state changes and
 // a flag is set.  Set NUM_BUT_POLLS according to the polling rate.
+
 void
 updateButtons (void)
 {
